@@ -1,0 +1,562 @@
+<title>GRN Rule Inspector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --surface-2:#eef1f6; --border:#dce1ea;
+  --ink:#1a2130; --ink-2:#54607a; --ink-3:#8892a8;
+  --accent:#3b6fd4; --accent-soft:#e7eefb;
+  --activate:#1a9d6a; --activate-soft:#e3f4ec;
+  --inhibit:#d1495b; --inhibit-soft:#fbe7ea;
+  --warn:#bd7d1e; --warn-soft:#f6edd9;
+  --undef:#8892a8; --undef-soft:#edeff4;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  --shadow:0 1px 2px rgba(20,30,55,.05),0 4px 16px rgba(20,30,55,.06);
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme:dark){
+    --bg:#0e131f; --surface:#161d2c; --surface-2:#1e2636; --border:#2a3448;
+    --ink:#e7ebf4; --ink-2:#a4aec5; --ink-3:#6c7690;
+    --accent:#6f9bff; --accent-soft:#1a2740;
+    --activate:#42c68b; --activate-soft:#15301f;
+    --inhibit:#f0788a; --inhibit-soft:#331520;
+    --warn:#d99a3c; --warn-soft:#312611;
+    --undef:#6c7690; --undef-soft:#1d2534;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e131f; --surface:#161d2c; --surface-2:#1e2636; --border:#2a3448;
+  --ink:#e7ebf4; --ink-2:#a4aec5; --ink-3:#6c7690;
+  --accent:#6f9bff; --accent-soft:#1a2740;
+  --activate:#42c68b; --activate-soft:#15301f;
+  --inhibit:#f0788a; --inhibit-soft:#331520;
+  --warn:#d99a3c; --warn-soft:#312611;
+  --undef:#6c7690; --undef-soft:#1d2534;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.01em}
+a{color:var(--accent)}
+
+/* header */
+header.top{display:flex;flex-wrap:wrap;gap:18px 26px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.brand h1{font-size:26px;display:flex;align-items:center;gap:10px}
+.brand .dna{font-size:22px}
+.brand p{margin:5px 0 0;color:var(--ink-2);font-size:13.5px;max-width:52ch}
+.loadbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--sans);font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--ink);
+  padding:8px 13px;border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.filename{font-family:var(--mono);font-size:12px;color:var(--ink-3);align-self:center}
+
+/* chips row */
+.chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-bottom:22px}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 14px;box-shadow:var(--shadow)}
+.chip .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600}
+.chip .v{font-family:var(--mono);font-size:23px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.chip .v small{font-size:13px;color:var(--ink-3);font-weight:500}
+
+/* tabs */
+nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px}
+nav.tabs button{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ink-2);background:none;border:none;
+  padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+
+.panel{display:none}
+.panel.active{display:block}
+
+/* generic card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px 20px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;text-transform:uppercase;letter-spacing:.045em;color:var(--ink-2);margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid2>.span{grid-column:1/-1}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+/* bars */
+.bar-row{display:grid;grid-template-columns:130px 1fr 46px;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+.bar-row .lbl{color:var(--ink-2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-row .lbl.mono{font-family:var(--mono)}
+.bar-track{background:var(--surface-2);border-radius:5px;height:16px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;background:var(--accent);min-width:2px}
+.bar-row .num{font-family:var(--mono);font-size:12px;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+/* stacked composition bar */
+.stack{display:flex;height:26px;border-radius:7px;overflow:hidden;border:1px solid var(--border)}
+.stack>span{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:12px;font-size:12.5px}
+.legend .li{display:flex;align-items:center;gap:6px;color:var(--ink-2)}
+.dot{width:11px;height:11px;border-radius:3px;flex:none}
+
+/* histogram */
+.hist{display:flex;align-items:flex-end;gap:5px;height:130px;padding-top:6px}
+.hist .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+.hist .hb{width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
+.hist .hx{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.hist .hn{font-family:var(--mono);font-size:10px;color:var(--ink-2)}
+
+/* inspector */
+.inspector-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
+.pick{position:relative}
+.pick input{font-family:var(--mono);font-size:14px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;
+  background:var(--surface);color:var(--ink);min-width:230px}
+.badge{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:4px 9px;border-radius:6px}
+.badge.rule{background:var(--accent-soft);color:var(--accent)}
+.badge.undefined{background:var(--undef-soft);color:var(--undef)}
+.badge.toomany{background:var(--warn-soft);color:var(--warn)}
+.badge.const0,.badge.const1{background:var(--inhibit-soft);color:var(--inhibit)}
+.rawrule{font-family:var(--mono);font-size:13.5px;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:9px;padding:12px 14px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;line-height:1.6}
+.rawrule .tgt{color:var(--accent);font-weight:600}
+.rawrule .op{color:var(--ink-3)}
+.rawrule .neg{color:var(--inhibit);font-weight:600}
+
+/* logic ladder */
+.ladder{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.term{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px}
+.term .gate{display:flex;align-items:center;gap:6px;color:var(--ink-3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.lit{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:13px;font-weight:500;
+  padding:5px 10px;border-radius:7px;border:1px solid transparent}
+.lit.act{background:var(--activate-soft);color:var(--activate);border-color:color-mix(in srgb,var(--activate) 25%,transparent)}
+.lit.inh{background:var(--inhibit-soft);color:var(--inhibit);border-color:color-mix(in srgb,var(--inhibit) 25%,transparent)}
+.lit .not{font-weight:700;opacity:.85}
+.andsym{color:var(--ink-3);font-family:var(--mono);font-size:12px;padding:0 1px}
+.orjoin{display:flex;align-items:center;gap:9px;padding:4px 0 4px 4px;color:var(--warn);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:.06em}
+.orjoin::before,.orjoin::after{content:"";height:1px;background:var(--border);flex:1}
+.arrow-to{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:13px;color:var(--ink-2)}
+.arrow-to .tgt{font-family:var(--mono);font-weight:600;color:var(--accent);background:var(--accent-soft);
+  padding:6px 12px;border-radius:8px}
+
+/* two-col literal lists */
+.siglists{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:620px){.siglists{grid-template-columns:1fr}}
+.siglist h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2);display:flex;gap:7px;align-items:center}
+.siglist .items{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--mono);font-size:12px;padding:4px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-2);cursor:pointer}
+.tag:hover{border-color:var(--accent);color:var(--accent)}
+.empty{color:var(--ink-3);font-size:13px;font-style:italic}
+
+/* network */
+.netwrap{overflow-x:auto}
+svg.net{display:block;width:100%;height:auto;min-width:520px}
+.net text{font-family:var(--mono);fill:var(--ink-2)}
+.hint{font-size:12.5px;color:var(--ink-3);margin-top:10px}
+.note{font-size:12.5px;color:var(--ink-2);background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);
+  border-radius:8px;padding:9px 12px;margin-bottom:16px}
+.foot{margin-top:26px;font-size:12px;color:var(--ink-3);text-align:center}
+[hidden]{display:none!important}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1><span class="dna">🧬</span> GRN Rule Inspector</h1>
+      <p>Load a Boolean rules file (<span style="font-family:var(--mono)">Target = A &amp;&amp; B || !C</span>, one per line). Audit rule health, inspect logic, and trace a gene's neighborhood.</p>
+    </div>
+    <div class="loadbar">
+      <input type="file" id="file" accept=".txt,.tsv,.csv,text/plain" hidden>
+      <button class="btn primary" onclick="document.getElementById('file').click()">Load rules file…</button>
+      <button class="btn" id="pasteBtn">Paste</button>
+      <button class="btn" id="sampleBtn">Sample</button>
+      <button class="btn" id="themeBtn" title="Toggle theme">◐</button>
+      <span class="filename" id="fname">sample data</span>
+    </div>
+  </header>
+
+  <div class="note" id="sampleNote">Showing a <strong>built-in sample</strong> of 20 rules (real DDR-network rules, for demonstration). Load your own <span style="font-family:var(--mono)">.txt</span> to replace it.</div>
+
+  <div class="chips" id="chips"></div>
+
+  <nav class="tabs">
+    <button class="active" data-tab="overview">Overview / QC</button>
+    <button data-tab="inspect">Inspect gene</button>
+    <button data-tab="network">Subnetwork</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="panel active" id="overview">
+    <div class="grid2">
+      <div class="card span">
+        <h3>Rule-type composition</h3>
+        <div class="stack" id="typeStack"></div>
+        <div class="legend" id="typeLegend"></div>
+      </div>
+      <div class="card">
+        <h3>Fan-in distribution <span style="text-transform:none;font-weight:400;color:var(--ink-3)">(regulators per target)</span></h3>
+        <div class="hist" id="faninHist"></div>
+      </div>
+      <div class="card">
+        <h3>Activator vs inhibitor edges</h3>
+        <div id="signBars"></div>
+        <p class="hint" id="signHint"></p>
+      </div>
+      <div class="card span">
+        <h3>Top regulators <span style="text-transform:none;font-weight:400;color:var(--ink-3)">(by out-degree — targets they appear in)</span></h3>
+        <div id="topReg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSPECT -->
+  <section class="panel" id="inspect">
+    <div class="card">
+      <div class="inspector-head">
+        <div class="pick">
+          <input id="geneInput" list="geneList" placeholder="Type a target gene…" autocomplete="off">
+          <datalist id="geneList"></datalist>
+        </div>
+        <span class="badge" id="geneBadge"></span>
+        <span class="filename" id="geneFanin"></span>
+      </div>
+      <div class="rawrule" id="rawRule"></div>
+      <div id="ladderWrap" style="margin-top:16px"></div>
+      <div class="siglists" id="sigLists"></div>
+      <div id="downstream" style="margin-top:18px"></div>
+    </div>
+  </section>
+
+  <!-- NETWORK -->
+  <section class="panel" id="network">
+    <div class="card">
+      <div class="inspector-head">
+        <div class="pick">
+          <input id="netInput" list="geneList" placeholder="Center on a gene…" autocomplete="off">
+        </div>
+        <span class="filename">green = activates · red = inhibits · arrow points at the regulated gene</span>
+      </div>
+      <div class="netwrap"><svg class="net" id="netSvg" viewBox="0 0 900 560" role="img" aria-label="gene neighborhood"></svg></div>
+      <p class="hint" id="netHint"></p>
+    </div>
+  </section>
+
+  <p class="foot">Parsed entirely in your browser · nothing is uploaded. Operators: <span style="font-family:var(--mono)">&amp;&amp; &nbsp; ||  &nbsp; !</span> · special values <span style="font-family:var(--mono)">Undefined</span>, <span style="font-family:var(--mono)">Too many source nodes</span>, constants <span style="font-family:var(--mono)">0 / 1</span>.</p>
+</div>
+
+<script>
+const SAMPLE = `RAD52 = ABL1 && WRN
+ABL2 = ABL1 || ABL2 || BTF3 || HCK && PDGFRB || SRC
+TP53BP1 = PIAS1 && PAXIP1 || PIAS1 && ABL1 || PIAS1 && ATM || PAXIP1 && ABL1 || PAXIP1 && ATM || ABL1 && ATM
+LASP1 = ABL1 || !PRKACA || !PRKCB || !PRKG1 && SRC
+CFH = !SIRT1
+MEOX1 = PAX1 || PAX3
+HSPB6 = !PRKACA
+PDK4 = !E2F1 && FOXO1 || FOXO3 && !NFKB1 || NKX2_1 || PPARA && PPARD && !RELA
+LIG3 = !CDK2 && !TOP1
+HOXA11 = KDM6A && KMT2A && !YY1
+CDK1 = CDC25C || MYBL2 && PTTG1 || MYBL2 && CDC25A || PTTG1 && CDC25A || CDC25A && E2F1
+SYK = VAV1 || FYN
+GLI1 = PTCH1 && AKT2
+ACSL1 = PPARA && RB1
+MAPK3 = ARAF || CALM3
+RAD50 = ATM && RBL2
+DCLRE1A = ATM || ATR
+SEMA3F = Undefined
+KLHL13 = Undefined
+CFLAR = Too many source nodes`;
+
+/* ---------- parsing ---------- */
+function classify(rhs){
+  const t=rhs.trim();
+  if(/^undefined$/i.test(t))return'undefined';
+  if(/^too\s+many/i.test(t))return'toomany';
+  if(/^(0|false)$/i.test(t))return'const0';
+  if(/^(1|true)$/i.test(t))return'const1';
+  return'rule';
+}
+function stripParens(s){
+  s=s.trim();
+  while(s.startsWith('(')&&s.endsWith(')')){
+    let d=0,ok=true;
+    for(let i=0;i<s.length;i++){
+      if(s[i]==='(')d++;else if(s[i]===')'){d--;if(d===0&&i<s.length-1){ok=false;break;}}
+    }
+    if(ok)s=s.slice(1,-1).trim();else break;
+  }
+  return s;
+}
+function splitTop(s,ch){
+  const out=[];let d=0,cur='';
+  for(let i=0;i<s.length;i++){
+    const c=s[i];
+    if(c==='(')d++;else if(c===')')d--;
+    if(d===0&&c===ch){out.push(cur);cur='';}else cur+=c;
+  }
+  out.push(cur);return out;
+}
+function toDNF(rhs){
+  const norm=rhs.replace(/&&/g,'&').replace(/\|\|/g,'|');
+  return splitTop(norm,'|').map(ts=>
+    splitTop(ts,'&').map(ls=>{
+      let x=stripParens(ls),neg=false;
+      while(x.startsWith('!')){neg=!neg;x=stripParens(x.slice(1));}
+      return {name:x.trim(),neg,complex:/[&|]/.test(x)};
+    })
+  );
+}
+function literals(rhs){ // flat list w/ sign, for edges
+  const map=new Map();const re=/(!?)\s*([A-Za-z_][A-Za-z0-9_\-.]*)/g;let m;
+  while((m=re.exec(rhs))){
+    const name=m[2];
+    if(/^(and|or|not|true|false|undefined)$/i.test(name))continue;
+    const neg=m[1]==='!';
+    if(!map.has(name))map.set(name,{pos:0,neg:0});
+    map.get(name)[neg?'neg':'pos']++;
+  }
+  return [...map.entries()].map(([name,c])=>({name,sign:c.pos&&c.neg?'both':c.neg?'inh':'act'}));
+}
+
+let MODEL=null;
+function build(text){
+  const rules=new Map();
+  text.split(/\r?\n/).forEach(line=>{
+    const l=line.trim();if(!l||l.startsWith('#'))return;
+    const i=l.indexOf('=');if(i<0)return;
+    const target=l.slice(0,i).trim();const rhs=l.slice(i+1).trim();
+    if(!target)return;
+    rules.set(target,{rhs,type:classify(rhs)});
+  });
+  const outDeg=new Map();      // regulator -> Set(targets)
+  const edgesInto=new Map();   // target -> [{name,sign}]
+  rules.forEach((r,tgt)=>{
+    let lits=[];
+    if(r.type==='rule')lits=literals(r.rhs);
+    edgesInto.set(tgt,lits);
+    lits.forEach(({name,sign})=>{
+      if(!outDeg.has(name))outDeg.set(name,new Map());
+      outDeg.get(name).set(tgt,sign);
+    });
+  });
+  MODEL={rules,outDeg,edgesInto};
+  render();
+}
+
+/* ---------- rendering ---------- */
+const $=s=>document.querySelector(s);
+const TYPES=[
+  ['rule','Real rule','--accent'],
+  ['toomany','Too many sources','--warn'],
+  ['const0','Constant = 0','--inhibit'],
+  ['const1','Constant = 1','--activate'],
+  ['undefined','Undefined','--undef'],
+];
+function cvar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+function render(){
+  const {rules,outDeg,edgesInto}=MODEL;
+  const N=rules.size;
+  const counts={rule:0,toomany:0,const0:0,const1:0,undefined:0};
+  let edges=0,faninSum=0;const faninArr=[];
+  const signCount={act:0,inh:0,both:0};
+  edgesInto.forEach((lits,tgt)=>{
+    counts[rules.get(tgt).type]++;
+    if(rules.get(tgt).type==='rule'){
+      faninArr.push(lits.length);faninSum+=lits.length;edges+=lits.length;
+      lits.forEach(l=>signCount[l.sign]++);
+    }
+  });
+  const realN=counts.rule||1;
+  // chips
+  const meanFanin=(faninSum/(realN)).toFixed(1);
+  const maxFanin=faninArr.length?Math.max(...faninArr):0;
+  $('#chips').innerHTML=[
+    ['Targets',N,''],
+    ['Real rules',counts.rule,`<small>${(100*counts.rule/N).toFixed(0)}%</small>`],
+    ['Undefined',counts.undefined,''],
+    ['Too many',counts.toomany,''],
+    ['Edges',edges,''],
+    ['Mean fan-in',meanFanin,''],
+    ['Max fan-in',maxFanin,''],
+  ].map(([k,v,x])=>`<div class="chip"><div class="k">${k}</div><div class="v">${v}${x}</div></div>`).join('');
+
+  // type stack
+  const stack=TYPES.map(([key,,col])=>{
+    const c=counts[key];if(!c)return'';
+    return `<span style="width:${100*c/N}%;background:var(${col})" title="${key}: ${c}"></span>`;
+  }).join('');
+  $('#typeStack').innerHTML=stack;
+  $('#typeLegend').innerHTML=TYPES.map(([key,label,col])=>
+    `<span class="li"><span class="dot" style="background:var(${col})"></span>${label} — <b style="font-family:var(--mono);color:var(--ink)">${counts[key]}</b></span>`
+  ).join('');
+
+  // fan-in histogram (bucket 0..10, 11+)
+  const buckets=new Array(12).fill(0);
+  faninArr.forEach(f=>buckets[Math.min(f,11)]++);
+  const bmax=Math.max(...buckets,1);
+  $('#faninHist').innerHTML=buckets.map((c,i)=>
+    `<div class="col"><div class="hn">${c||''}</div><div class="hb" style="height:${100*c/bmax}%"></div><div class="hx">${i===11?'11+':i}</div></div>`
+  ).join('');
+
+  // sign bars
+  const sTot=signCount.act+signCount.inh+signCount.both||1;
+  $('#signBars').innerHTML=[
+    ['Activators','act','--activate'],['Inhibitors','inh','--inhibit'],['Context (both)','both','--undef'],
+  ].map(([lbl,k,col])=>`<div class="bar-row"><span class="lbl">${lbl}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${100*signCount[k]/sTot}%;background:var(${col})"></div></div>
+    <span class="num">${signCount[k]}</span></div>`).join('');
+  const ratio=signCount.inh?(signCount.act/signCount.inh).toFixed(2):'∞';
+  $('#signHint').textContent=`${(100*signCount.act/sTot).toFixed(0)}% of edges are activating · activator:inhibitor ≈ ${ratio}:1`;
+
+  // top regulators
+  const regs=[...outDeg.entries()].map(([n,m])=>[n,m.size]).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const rmax=regs.length?regs[0][1]:1;
+  $('#topReg').innerHTML=regs.map(([n,d])=>`<div class="bar-row"><span class="lbl mono">${n}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${100*d/rmax}%"></div></div>
+    <span class="num">${d}</span></div>`).join('')||'<p class="empty">No regulators found.</p>';
+
+  // datalists
+  const opts=[...rules.keys()].sort().map(g=>`<option value="${g}">`).join('');
+  $('#geneList').innerHTML=opts;
+
+  // default inspect selection
+  const firstReal=[...rules.entries()].find(([,r])=>r.type==='rule');
+  if(firstReal){ $('#geneInput').value=firstReal[0]; inspect(firstReal[0]); $('#netInput').value=firstReal[0]; drawNet(firstReal[0]); }
+}
+
+/* ---------- inspector ---------- */
+function highlightRHS(rhs){
+  return rhs.replace(/&&|\|\||!/g,m=>m==='!'?'<span class="neg">!</span>':`<span class="op">${m}</span>`);
+}
+function inspect(gene){
+  const r=MODEL.rules.get(gene);
+  if(!r){$('#rawRule').textContent='Gene not found in this file.';$('#ladderWrap').innerHTML='';$('#sigLists').innerHTML='';$('#downstream').innerHTML='';$('#geneBadge').className='badge';$('#geneBadge').textContent='';$('#geneFanin').textContent='';return;}
+  const badge=$('#geneBadge');badge.className='badge '+r.type;
+  badge.textContent={rule:'real rule',undefined:'undefined',toomany:'too many sources',const0:'constant = 0',const1:'constant = 1'}[r.type];
+  const lits=MODEL.edgesInto.get(gene)||[];
+  $('#geneFanin').textContent=r.type==='rule'?`${lits.length} regulator${lits.length!==1?'s':''}`:'';
+  $('#rawRule').innerHTML=`<span class="tgt">${gene}</span> <span class="op">=</span> ${highlightRHS(r.rhs)}`;
+
+  if(r.type!=='rule'){
+    $('#ladderWrap').innerHTML=`<p class="empty">No logic to draw — this target is <b>${r.type==='toomany'?'flagged “too many source nodes”':r.type}</b>.</p>`;
+    $('#sigLists').innerHTML='';
+  }else{
+    const terms=toDNF(r.rhs);
+    const rows=terms.map((term,ti)=>{
+      const chips=term.map((lit,li)=>{
+        const cls=lit.neg?'inh':'act';
+        const not=lit.neg?'<span class="not">¬</span>':'';
+        const sep=li<term.length-1?'<span class="andsym">∧</span>':'';
+        return `<span class="lit ${cls}">${not}${lit.name}</span>${sep}`;
+      }).join('');
+      const gate=term.length>1?'<span class="gate">AND</span>':'';
+      return `${ti>0?'<div class="orjoin">or</div>':''}<div class="term">${gate}${chips}</div>`;
+    }).join('');
+    $('#ladderWrap').innerHTML=`<div class="ladder">${rows}</div>
+      <div class="arrow-to"><span>${terms.length>1?'any term true':'term true'} →</span><span class="tgt">${gene} = ON</span></div>`;
+
+    const act=lits.filter(l=>l.sign==='act'),inh=lits.filter(l=>l.sign==='inh'),both=lits.filter(l=>l.sign==='both');
+    const listHTML=(arr,cls)=>arr.length?arr.map(l=>`<span class="tag" onclick="jump('${l.name}')">${l.name}</span>`).join(''):'<span class="empty">none</span>';
+    $('#sigLists').innerHTML=`
+      <div class="siglist"><h4><span class="dot" style="background:var(--activate)"></span>Activators (${act.length})</h4><div class="items">${listHTML(act)}</div></div>
+      <div class="siglist"><h4><span class="dot" style="background:var(--inhibit)"></span>Inhibitors (${inh.length})</h4><div class="items">${listHTML(inh)}</div></div>
+      ${both.length?`<div class="siglist"><h4><span class="dot" style="background:var(--undef)"></span>Context — appears both ways (${both.length})</h4><div class="items">${listHTML(both)}</div></div>`:''}`;
+  }
+
+  // downstream: what this gene regulates
+  const out=MODEL.outDeg.get(gene);
+  if(out&&out.size){
+    const items=[...out.entries()].sort().map(([t,s])=>`<span class="tag" style="color:var(--${s==='inh'?'inhibit':s==='act'?'activate':'ink-2'})" onclick="jump('${t}')">${s==='inh'?'⊣':'→'} ${t}</span>`).join('');
+    $('#downstream').innerHTML=`<h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2);margin:0 0 8px">Regulates downstream (${out.size})</h4><div class="items" style="display:flex;flex-wrap:wrap;gap:6px">${items}</div>`;
+  }else{
+    $('#downstream').innerHTML=`<h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);margin:0 0 8px">Regulates downstream (0)</h4><p class="empty">Not used as a regulator in any rule in this file.</p>`;
+  }
+}
+function jump(gene){
+  if(!MODEL.rules.has(gene)){ // still allow centering network on non-target regulators
+    setTab('network');$('#netInput').value=gene;drawNet(gene);return;
+  }
+  setTab('inspect');$('#geneInput').value=gene;inspect(gene);
+}
+
+/* ---------- network ego graph ---------- */
+function drawNet(gene){
+  const svg=$('#netSvg');const W=900,H=560,cx=W/2,cy=H/2;
+  const inLits=(MODEL.edgesInto.get(gene)||[]).slice();       // regulators of gene (incoming)
+  const outMap=MODEL.outDeg.get(gene);
+  const outArr=outMap?[...outMap.entries()].map(([t,s])=>({name:t,sign:s})):[];
+  const CAP=14;
+  const ins=inLits.slice(0,CAP), outs=outArr.slice(0,CAP);
+  const ink2=cvar('--ink-2'),ink3=cvar('--ink-3'),acc=cvar('--accent'),surf=cvar('--surface'),
+        act=cvar('--activate'),inh=cvar('--inhibit'),und=cvar('--undef'),border=cvar('--border');
+  const colFor=s=>s==='inh'?inh:s==='act'?act:und;
+  let el=`<defs>
+    <marker id="ah-act" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="${act}"/></marker>
+    <marker id="ah-inh" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="${inh}"/></marker>
+    <marker id="ah-both" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="${und}"/></marker>
+  </defs>`;
+  // positions: regulators on left arc, targets on right arc
+  function place(arr,side){
+    const n=arr.length;const R=Math.min(230, 120+n*10);
+    return arr.map((d,i)=>{
+      const frac=n===1?0.5:i/(n-1);
+      const ang=(side==='L'?Math.PI/2:-Math.PI/2)+ (side==='L'?1:-1)*(frac-0.5)*Math.PI*0.95;
+      return {...d,x:cx+(side==='L'?-1:1)*Math.cos(ang)*R*0.9, y:cy - Math.sin(ang)*R*0.72};
+    });
+  }
+  const inP=place(ins,'L'),outP=place(outs,'R');
+  // edges incoming: node -> center
+  inP.forEach(d=>{
+    el+=`<line x1="${d.x}" y1="${d.y}" x2="${cx}" y2="${cy}" stroke="${colFor(d.sign)}" stroke-width="1.7" opacity=".7" marker-end="url(#ah-${d.sign})"/>`;
+  });
+  outP.forEach(d=>{
+    el+=`<line x1="${cx}" y1="${cy}" x2="${d.x}" y2="${d.y}" stroke="${colFor(d.sign)}" stroke-width="1.7" opacity=".7" marker-end="url(#ah-${d.sign})"/>`;
+  });
+  function node(d,center){
+    const w=Math.max(46,d.name.length*8+18),h=26;
+    const fill=center?acc:surf;const stroke=center?acc:border;const tc=center?'#fff':ink2;
+    return `<g style="cursor:pointer" onclick="jump('${d.name}')">
+      <rect x="${d.x-w/2}" y="${d.y-h/2}" width="${w}" height="${h}" rx="7" fill="${fill}" stroke="${stroke}" stroke-width="1.3"/>
+      <text x="${d.x}" y="${d.y+4}" text-anchor="middle" font-size="12.5" fill="${tc}" font-weight="${center?600:500}">${d.name}</text></g>`;
+  }
+  inP.forEach(d=>el+=node(d));
+  outP.forEach(d=>el+=node(d));
+  el+=node({name:gene,x:cx,y:cy},true);
+  // side labels
+  el+=`<text x="${cx-260}" y="34" font-size="11" fill="${ink3}" text-anchor="middle">REGULATORS (in)</text>`;
+  el+=`<text x="${cx+260}" y="34" font-size="11" fill="${ink3}" text-anchor="middle">REGULATES (out)</text>`;
+  svg.innerHTML=el;
+  const noteI=inLits.length>CAP?` (showing ${CAP} of ${inLits.length})`:'';
+  const noteO=outArr.length>CAP?` (showing ${CAP} of ${outArr.length})`:'';
+  $('#netHint').textContent=`${gene}: ${inLits.length} regulator${inLits.length!==1?'s':''}${noteI} · regulates ${outArr.length} gene${outArr.length!==1?'s':''}${noteO}. Click any node to recenter.`;
+}
+
+/* ---------- tabs / controls ---------- */
+function setTab(name){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===name));
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+$('#geneInput').addEventListener('change',e=>inspect(e.target.value.trim()));
+$('#geneInput').addEventListener('input',e=>{if(MODEL.rules.has(e.target.value.trim()))inspect(e.target.value.trim());});
+$('#netInput').addEventListener('change',e=>drawNet(e.target.value.trim()));
+$('#netInput').addEventListener('input',e=>{const g=e.target.value.trim();if(MODEL.rules.has(g)||MODEL.outDeg.has(g))drawNet(g);});
+
+$('#file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{ $('#fname').textContent=f.name; $('#sampleNote').hidden=true; build(rd.result); setTab('overview'); };
+  rd.readAsText(f);
+});
+$('#sampleBtn').onclick=()=>{$('#fname').textContent='sample data';$('#sampleNote').hidden=false;build(SAMPLE);setTab('overview');};
+$('#pasteBtn').onclick=()=>{
+  const txt=prompt('Paste rules (Target = expr, one per line):');
+  if(txt&&txt.trim()){$('#fname').textContent='pasted rules';$('#sampleNote').hidden=true;build(txt);setTab('overview');}
+};
+$('#themeBtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next=cur==='dark'?'light':cur==='light'?'dark':(matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark');
+  document.documentElement.setAttribute('data-theme',next);
+  const g=$('#netInput').value.trim();if(g)drawNet(g); // recolor svg
+};
+
+build(SAMPLE);
+</script>
