@@ -31,6 +31,39 @@ Every target gets one status:
 
 The top of the page gives the headline (“all N rules match” or “X of N differ”) and a status bar. Filter by status, search by gene, click any row for the side-by-side logic, and **Export CSV** for the full table.
 
+### Coverage map and regulator overlap
+
+For the genes that are targets in both files, the page groups each one (click a group to list it):
+
+| Group                                      | Meaning                                                        |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| **Both have a real rule**                  | Compared further for regulator overlap (below)                 |
+| **Rescued: original Undefined / Too many** | The refactored file has a real rule where the original gave up |
+| **Only original has a rule**               | The refactored file has no real rule                           |
+| **Neither has a rule**                     | Undefined, Too many source nodes or a constant on both sides   |
+
+A rule that is only `0` or `1` is a constant and does not count as a real rule.
+
+Where both have a real rule, it reports the **Jaccard overlap** of the two regulator sets (mean, median, and how many are the same / partly overlapping / disjoint). Overlap ignores gates and signs, so it also counts rules with the **same regulators but different logic** (for example `A && B` vs `A || B`). For a refactor the regulators should be the same; low overlap is expected only when comparing a different method.
+
+### Is a mismatch caused by missing nodes?
+
+A **node** is any gene named in a file, as a target or as a regulator. Every mismatch is tagged with a cause. For a firm answer, also add each run's **`Cytoscape.csv`** (optional): it lists the regulators available to every gene, so _different inputs_ can be told apart from _different code_.
+
+| Cause                                                | From the rules files alone                                                                                             | With both `Cytoscape.csv` files                                                                      |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Missing nodes**                                    | The rules agree once the absent genes are held at 0 or 1 (_Different_), or every regulator is absent (_Lost / gained_) | Every change in the gene's available regulators involves an absent gene                              |
+| **Partly missing nodes**                             | Absent genes are involved, but the logic differs beyond that (or over 12 regulators)                                   | Some changed regulators are absent genes, some are not                                               |
+| **Edges changed**                                    | n/a                                                                                                                    | Available regulators changed, but all exist in both networks                                         |
+| **Not node-related** / **Same inputs, rule changed** | Every regulator named in the rule exists in both networks                                                              | Same available regulators in both runs, so the code or other data (e.g. expression) changed the rule |
+| **Can't tell from rules**                            | One side is `Too many source nodes`, which lists no regulators                                                         | Resolved                                                                                             |
+
+_Only in one file_ counts as missing nodes when the gene is not a node in the other file at all.
+
+With both edge files, the page also reports the **same inputs, same rule** check: of the genes with identical available regulators in both runs, how many rules match. That is the fair test of the refactored code. Genes whose inputs changed cannot test it; rerun both pipelines on the same input.
+
+The page warns if an edge file doesn't fit its rules file (it may belong to another run). `NKX2-1` in `Cytoscape.csv` and `NKX2_1` in rules files are treated as the same gene. **Export CSV** includes the coverage group, overlap, cause and input changes.
+
 If the refactor is faithful you should see **100%**, with every row _Identical_ or _Equivalent_ and nothing under _Only in original / refactored_.
 
 ---

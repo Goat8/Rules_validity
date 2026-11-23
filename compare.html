@@ -63,7 +63,7 @@ header.top{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:flex-end;justif
 .btn{font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--ink);
   padding:8px 13px;border-radius:8px;cursor:pointer;transition:border-color .15s}
 .btn:hover{border-color:var(--accent)}
-.btn:focus-visible,.zone:focus-within,.fchip:focus-visible,.seg button:focus-visible,.row:focus-visible,input:focus-visible,summary:focus-visible,.switch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:focus-visible,.focus:focus-visible,.zone:focus-within,.fchip:focus-visible,.seg button:focus-visible,.row:focus-visible,input:focus-visible,summary:focus-visible,.switch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .note{font-size:12.5px;color:var(--ink-2);background:color-mix(in srgb,var(--warn) 13%,var(--surface));
   border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);border-radius:8px;padding:9px 12px;margin-bottom:16px}
@@ -160,8 +160,7 @@ header.top{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:flex-end;justif
 .causes{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:16px 20px;box-shadow:var(--shadow);margin-bottom:18px}
 .causes h3{font-size:15px}
 .csub{margin:4px 0 0;color:var(--ink-2);font-size:13px;max-width:80ch}
-.ctiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
-@media(max-width:700px){.ctiles{grid-template-columns:1fr}}
+.ctiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-top:14px}
 .ctile{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:12px 14px;border-radius:11px;cursor:pointer;
   border:1px solid var(--border);background:var(--surface);color:var(--ink)}
 .ctile:hover{border-color:var(--c)}
@@ -172,7 +171,18 @@ header.top{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:flex-end;justif
 .ctile .cn{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
 .ctile .cn small{font-size:12.5px;color:var(--ink-3);font-weight:500;margin-left:6px}
 .ctile .cd{font-size:12px;color:var(--ink-2)}
-.cs-nodes{--c:var(--plum)} .cs-mixed{--c:var(--warn)} .cs-other{--c:var(--neutral)}
+.cs-nodes{--c:var(--plum)} .cs-mixed{--c:var(--warn)} .cs-edges{--c:var(--info)} .cs-other{--c:var(--bad)} .cs-unknown{--c:var(--neutral)}
+.k-both_rule,.k-identical{--c:var(--ok)} .k-rescue_undef,.k-rescue_toomany{--c:var(--info)} .k-orig_only{--c:var(--orange)}
+.k-both_none{--c:var(--neutral)} .k-cat_other,.k-partial{--c:var(--warn)} .k-disjoint,.k-samelogic{--c:var(--bad)}
+.causes h4{font-size:13px;margin-top:18px}
+.control{margin-top:14px;padding:12px 14px;border-radius:11px;border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) 9%,var(--surface));font-size:13px;color:var(--ink-2)}
+.control b{color:var(--ink)} .control strong{display:block;font-size:15px;color:var(--ink);margin-bottom:3px}
+.warnline{margin:10px 0 0;font-size:12.5px;color:color-mix(in srgb,var(--warn) 75%,var(--ink))}
+.zone.small{padding:11px 18px;border-width:1px}
+.zone.small .zname{font-size:13px}
+.zone.small .zmeta{min-height:0}
+.optlbl{margin:2px 0 8px;font-size:12.5px;color:var(--ink-2)}
+.focus{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--ink);cursor:pointer}
 .ctag{margin-top:5px;font-size:11px;font-weight:600;color:color-mix(in srgb,var(--c) 70%,var(--ink))}
 
 details.how{margin-top:22px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 18px}
@@ -217,6 +227,17 @@ details.how dd{margin:0;color:var(--ink-2)}
       <span class="zhint">Drop the refactored <span style="font-family:var(--mono)">rules.txt</span> here, or click to choose</span>
     </label>
   </section>
+  <p class="optlbl"><b>Optional:</b> add each run's <span style="font-family:var(--mono)">Cytoscape.csv</span> (the network edges). It shows which regulators every gene had available, so the tool can separate <em>different inputs</em> from <em>different code</em>.</p>
+  <section class="zones" aria-label="Network edge files (optional)">
+    <label class="zone small" id="zoneEA" for="fileEA">
+      <input class="sr" type="file" id="fileEA" accept=".csv,.tsv,.txt,text/csv">
+      <span class="ztag">Original edges</span><span class="zname" id="nameEA">No file</span><span class="zmeta" id="metaEA"></span>
+    </label>
+    <label class="zone small" id="zoneEB" for="fileEB">
+      <input class="sr" type="file" id="fileEB" accept=".csv,.tsv,.txt,text/csv">
+      <span class="ztag">Refactored edges</span><span class="zname" id="nameEB">No file</span><span class="zmeta" id="metaEB"></span>
+    </label>
+  </section>
   <div class="ztools">
     <button class="btn" id="swapBtn" type="button">Swap original ⇄ refactored</button>
     <button class="btn" id="exampleBtn" type="button">Load example</button>
@@ -224,6 +245,7 @@ details.how dd{margin:0;color:var(--ink-2)}
 
   <section id="results" aria-live="polite">
     <div class="verdict" id="verdict"></div>
+    <section class="causes" id="coverage" hidden aria-label="Node by node coverage"></section>
     <section class="causes" id="causes" hidden aria-label="Why rules differ"></section>
 
     <div class="toolbar">
@@ -254,9 +276,13 @@ details.how dd{margin:0;color:var(--ink-2)}
       <dt><span class="pill s-gained">Rule gained</span></dt><dd>The reverse: the original had no rule, the refactored file does.</dd>
       <dt><span class="pill s-typechange">Marker changed</span></dt><dd>Both sides have no rule, but a different marker (Undefined vs Too many source nodes).</dd>
       <dt><span class="pill s-missing">Only in original</span> <span class="pill s-added">Only in refactored</span></dt><dd>The target appears in just one file.</dd>
-      <dt><b>Missing nodes</b></dt><dd>A <em>node</em> is any gene named in a file, as a target or as a regulator. If a rule differs because it uses a gene that is not a node in the other file, the refactored pipeline could not have used it. A mismatch counts as <b>fully explained</b> when the two rules agree once those absent genes are held at a constant state (0 or 1). For a lost or gained rule, when every regulator is absent. For a target in one file only, when that gene is not a node in the other file at all.</dd>
-      <dt><b>Partly missing nodes</b></dt><dd>Absent genes are involved, but the rules still differ after accounting for them (or there are too many regulators to check, over 12).</dd>
-      <dt><b>Not node-related</b></dt><dd>Every regulator exists in both networks, so the difference is a genuine change in the rule or in whether a rule was learned.</dd>
+      <dt><b>Coverage map</b></dt><dd>Every gene in both files is put in one group: both files have a real rule, the refactored file has one where the original had Undefined or Too many source nodes (rescued), only the original has one, or neither does. A rule that is just 0 or 1 is a constant and does not count as a real rule.</dd>
+      <dt><b>Regulator overlap</b></dt><dd>For genes where both files have a real rule: the Jaccard overlap of the two regulator sets (shared ÷ all). It ignores gates and signs, so it is shown next to a count of rules with <b>the same regulators but different logic</b>.</dd>
+      <dt><b>Missing nodes</b></dt><dd>A <em>node</em> is any gene named in a file, as a target or as a regulator. <b>From rules alone:</b> a mismatch is fully explained when the two rules agree once the absent genes are held at a constant state (0 or 1); for a lost or gained rule, when every regulator is absent. <b>With both Cytoscape.csv files:</b> when every change in the gene's available regulators involves a gene absent from the other network. Either way, a target in one file only counts here when it is not a node in the other file.</dd>
+      <dt><b>Partly missing nodes</b></dt><dd><b>From rules alone:</b> absent genes are involved, but the rules still differ after accounting for them (or there are over 12 regulators). <b>With edges:</b> some of the changed regulators are absent genes and some are not.</dd>
+      <dt><b>Edges changed</b></dt><dd>Only with edges: the gene's available regulators changed, although all of those regulators exist in both networks.</dd>
+      <dt><b>Not node-related</b> / <b>Same inputs, rule changed</b></dt><dd><b>From rules alone:</b> every regulator named in the rule exists in both networks. <b>With edges:</b> the gene had exactly the same available regulators in both runs, so the difference comes from the code or from other data such as expression.</dd>
+      <dt><b>Can't tell from rules</b></dt><dd>One side is Too many source nodes, which lists no regulators. Add both Cytoscape.csv files to resolve it.</dd>
     </dl>
   </details>
 
@@ -272,7 +298,7 @@ const MATCH=new Set(['identical','equivalent']);
 function norm(s){return s.replace(/\s+/g,' ').trim();}
 function classify(rhs){
   const t=norm(rhs).toLowerCase();
-  if(t==='undefined')return 'undefined';
+  if(t==='undefined'||t==='')return 'undefined';
   if(/^too many/.test(t))return 'toomany';
   return 'expr';
 }
@@ -414,21 +440,111 @@ function regsOf(r){
   try{return [...varsOf(parseExpr(r.rhs))];}
   catch(e){return (r.rhs.match(/[^\s&|!()]+/g)||[]).filter(x=>!/^(&&|\|\||&|\||!|1|0|true|false)$/i.test(x));}
 }
+/* Cytoscape.csv writes NKX2-1 where rules files write NKX2_1, so nodes are compared with - as _ */
+const canon=g=>g.replace(/-/g,'_');
 /* a node = any gene named in the file, as a target or as a regulator */
-function nodeSet(rules){
+function nodeSet(rules,edges){
   const s=new Set();
-  for(const [t,r] of rules){s.add(t);regsOf(r).forEach(g=>s.add(g));}
+  for(const [t,r] of rules){s.add(canon(t));regsOf(r).forEach(g=>s.add(canon(g)));}
+  if(edges)for(const [t,m] of edges){s.add(t);for(const g of m.values())s.add(g);}
   return s;
 }
+
+/* ---- coverage map: where do the two files land, node by node? ---- */
+function kindOf(r){
+  if(!r)return null;
+  if(r.type!=='expr')return r.type;
+  return regsOf(r).length?'rule':'constant';
+}
+const CATS=['both_rule','rescue_undef','rescue_toomany','orig_only','both_none','cat_other'];
+function catOf(a,b){
+  const o=kindOf(a),r=kindOf(b);
+  if(!o||!r)return null;
+  if(o==='rule'&&r==='rule')return 'both_rule';
+  if(r==='rule')return o==='undefined'?'rescue_undef':o==='toomany'?'rescue_toomany':'cat_other';
+  return o==='rule'?'orig_only':'both_none';
+}
+function jaccard(a,b){
+  const A=new Set(a),B=new Set(b);let i=0;A.forEach(g=>{if(B.has(g))i++;});
+  const u=A.size+B.size-i;return u?i/u:1;
+}
+const simOf=j=>j===1?'identical':j===0?'disjoint':'partial';
+function coverageOf(row){
+  const cat=catOf(row.a,row.b);if(!cat)return {};
+  if(cat!=='both_rule')return {cat};
+  const jac=jaccard(regsOf(row.a),regsOf(row.b));
+  return {cat,jac,sim:simOf(jac)};
+}
+
+/* ---- network edges (Cytoscape.csv): the regulators available to each target ---- */
+function splitCSV(l,d){
+  const out=[];let cur='',q=false;
+  for(let i=0;i<l.length;i++){
+    const c=l[i];
+    if(q){if(c==='"'){if(l[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else if(c==='"')q=true;
+    else if(c===d){out.push(cur);cur='';}
+    else cur+=c;
+  }
+  out.push(cur);return out.map(x=>x.trim());
+}
+function isEdgeFile(text){
+  const h=(text.replace(/^﻿/,'').split(/\r?\n/,1)[0]||'').toLowerCase();
+  return /[,\t]/.test(h)&&/\bsource\b/.test(h)&&/\btarget\b/.test(h);
+}
+/* returns Map target -> Map("source|interaction" -> source), or null if not an edge file */
+function parseEdges(text){
+  if(!isEdgeFile(text))return null;
+  const lines=text.replace(/^﻿/,'').split(/\r?\n/),d=lines[0].includes('\t')?'\t':',';
+  const h=splitCSV(lines[0],d).map(x=>x.toLowerCase());
+  const si=h.findIndex(x=>/\bsource\b/.test(x)),ti=h.findIndex(x=>/\btarget\b/.test(x)),ii=h.findIndex(x=>/interaction/.test(x));
+  const edges=new Map();let n=0;
+  for(let k=1;k<lines.length;k++){
+    if(!lines[k].trim())continue;
+    const c=splitCSV(lines[k],d);if(!c[si]||!c[ti])continue;
+    const g=canon(c[si]),t=canon(c[ti]);
+    if(!edges.has(t))edges.set(t,new Map());
+    const m=edges.get(t),key=g+'|'+(ii>=0?(c[ii]||'').toLowerCase():'');
+    if(!m.has(key)){m.set(key,g);n++;}
+  }
+  return {edges,n};
+}
+/* share of regulators used in rules that the edge file also lists for that target: low = wrong file */
+function edgeFit(rules,edges){
+  let ok=0,all=0;
+  for(const [t,r] of rules){
+    const m=edges.get(canon(t)),src=new Set(m?m.values():[]);
+    regsOf(r).forEach(g=>{all++;if(src.has(canon(g)))ok++;});
+  }
+  return all?ok/all:1;
+}
+function inputsOf(target,eA,eB){
+  const t=canon(target),a=eA.get(t)||new Map(),b=eB.get(t)||new Map();
+  const lost=[],gained=[];
+  a.forEach((g,k)=>{if(!b.has(k))lost.push(k);});
+  b.forEach((g,k)=>{if(!a.has(k))gained.push(k);});
+  return {same:!lost.length&&!gained.length,lost,gained,
+    nA:new Set(a.values()).size,nB:new Set(b.values()).size,
+    lostG:lost.map(k=>a.get(k)),gainedG:gained.map(k=>b.get(k))};
+}
+
 const FIX_MAX=6;
-/* cause: 'nodes' (explained by absent nodes) | 'mixed' (absent nodes involved, but not the whole story) | 'other' */
+/* cause: 'nodes' absent genes explain it | 'mixed' partly | 'edges' inputs changed, no absent genes |
+   'other' nothing about nodes explains it | 'unknown' rules text cannot say */
 function causeOf(row,ctx){
   const {target,status,a,b}=row;
   if(status==='identical'||status==='equivalent')return null;
+  const inA=g=>ctx.nA.has(canon(g)),inB=g=>ctx.nB.has(canon(g));
   const ra=regsOf(a),rb=regsOf(b);
-  const out={absentA:ra.filter(g=>!ctx.nB.has(g)),absentB:rb.filter(g=>!ctx.nA.has(g))};
-  if(status==='missing'){out.cause=ctx.nB.has(target)?'other':'nodes';return out;}
-  if(status==='added'){out.cause=ctx.nA.has(target)?'other':'nodes';return out;}
+  const out={absentA:ra.filter(g=>!inB(g)),absentB:rb.filter(g=>!inA(g))};
+  if(status==='missing'){out.cause=inB(target)?'other':'nodes';return out;}
+  if(status==='added'){out.cause=inA(target)?'other':'nodes';return out;}
+  if(row.inputs){
+    const ch=[...row.inputs.lostG.map(g=>!inB(g)),...row.inputs.gainedG.map(g=>!inA(g))];
+    out.cause=!ch.length?'other':ch.every(x=>x)?'nodes':ch.some(x=>x)?'mixed':'edges';
+    return out;
+  }
+  if(a.type==='toomany'||b.type==='toomany'){out.cause='unknown';return out;}
   if(status==='lost'){out.cause=ra.length&&out.absentA.length===ra.length?'nodes':out.absentA.length?'mixed':'other';return out;}
   if(status==='gained'){out.cause=rb.length&&out.absentB.length===rb.length?'nodes':out.absentB.length?'mixed':'other';return out;}
   if(status==='typechange'){out.cause='other';return out;}
@@ -457,6 +573,34 @@ function causeOf(row,ctx){
     }
   }catch(e){}
   return out;
+}
+/* compare everything; eA/eB are optional edge maps (used only when both are given) */
+function makeCtx(A,B,eA,eB){
+  const e=eA&&eB;
+  return {nA:nodeSet(A,e?eA:null),nB:nodeSet(B,e?eB:null),eA:e?eA:null,eB:e?eB:null};
+}
+function makeRow(t,A,B,ctx){
+  const a=A.get(t)||null,b=B.get(t)||null;
+  const row=!b?{target:t,status:'missing',a,b}:!a?{target:t,status:'added',a,b}:{target:t,a,b,...compareRules(a,b)};
+  if(a&&b&&ctx.eA)row.inputs=inputsOf(t,ctx.eA,ctx.eB);
+  return Object.assign(row,coverageOf(row),causeOf(row,ctx)||{});
+}
+function summarize(rows){
+  const cats={};CATS.forEach(k=>cats[k]=0);
+  const sims={identical:0,partial:0,disjoint:0},js=[];let sameRegsDiff=0;
+  const inp={n:0,same:0,sameMatch:0,sameRules:0,changed:0,changedMatch:0};
+  rows.forEach(r=>{
+    if(r.cat)cats[r.cat]++;
+    if(r.sim){sims[r.sim]++;js.push(r.jac);if(r.sim==='identical'&&!MATCH.has(r.status))sameRegsDiff++;}
+    if(r.inputs){
+      inp.n++;const m=MATCH.has(r.status);
+      if(r.inputs.same){inp.same++;if(m)inp.sameMatch++;if(r.cat==='both_rule'&&m)inp.sameRules++;}
+      else{inp.changed++;if(m)inp.changedMatch++;}
+    }
+  });
+  js.sort((x,y)=>x-y);const n=js.length;
+  return {cats,sims,sameRegsDiff,inp,shared:rows.filter(r=>r.cat).length,
+    mean:n?js.reduce((x,y)=>x+y,0)/n:null,median:n?(n%2?js[(n-1)/2]:(js[n/2-1]+js[n/2])/2):null};
 }
 /*CORE-END*/
 
@@ -508,14 +652,22 @@ ACSL1 = PPARA || RB1
 MAPK3 = ARAF || CALM3
 HLA-A = IRF1`;
 
-const CAUSES=['nodes','mixed','other'];
-const CAUSE_LABEL={nodes:'Missing nodes',mixed:'Partly missing nodes',other:'Not node-related'};
-const CAUSE_DESC={
-  nodes:'Explained by genes that are not in the other file’s network. Hold them at a constant state and the rules agree.',
-  mixed:'Genes are missing from the other network, but the logic differs on top of that.',
-  other:'Every regulator exists in both networks. The rule, or whether a rule was learned at all, genuinely changed.'
+const CAUSES=['nodes','mixed','edges','other','unknown'];
+const causeLabel=k=>({nodes:'Missing nodes',mixed:'Partly missing nodes',edges:'Edges changed',other:state.ctx&&state.ctx.eA?'Same inputs, rule changed':'Not node-related',unknown:'Can’t tell from rules'})[k];
+const causeDesc=k=>{
+  const e=state.ctx&&state.ctx.eA;
+  return ({
+    nodes:e?'The gene itself is missing from the other network, or every change in its available regulators involves a missing gene.':'Explained by genes that are not in the other file’s network. Hold them at a constant state and the rules agree.',
+    mixed:e?'Some of the changed regulators are missing genes, some are not.':'Genes are missing from the other network, but the logic differs on top of that. Add both Cytoscape.csv files to see if the inputs explain it.',
+    edges:'The available regulators changed, but all of them exist in both networks.',
+    other:e?'The gene had the same available regulators in both runs (or is only missing a rule line). Look here for code differences.':'Every regulator named in the rule exists in both networks.',
+    unknown:'One side is “Too many source nodes”, which lists no regulators. Add both Cytoscape.csv files to resolve it.'
+  })[k];
 };
-const state={A:null,B:null,rows:[],view:'diff',chips:new Set(DIFFS),causes:new Set(CAUSES),ctx:null,q:'',limit:100,open:new Set(),run:0};
+const CAT_LABEL={both_rule:'Both have a real rule',rescue_undef:'Rescued: original Undefined',rescue_toomany:'Rescued: original Too many',orig_only:'Only original has a rule',both_none:'Neither has a rule',cat_other:'Rule vs constant'};
+const CAT_DESC={both_rule:'Compare these for overlap below',rescue_undef:'Refactored has a rule the original left Undefined',rescue_toomany:'Refactored has a rule where the original gave up',orig_only:'Refactored has no real rule here',both_none:'Undefined, Too many or constant on both sides',cat_other:'Refactored has a rule, the original a constant'};
+const SIM_LABEL={identical:'Same regulators',partial:'Partial overlap',disjoint:'No shared regulators',samelogic:'Same regulators, different logic'};
+const state={A:null,B:null,EA:null,EB:null,rows:[],view:'diff',chips:new Set(DIFFS),focus:null,sum:null,ctx:null,q:'',limit:100,open:new Set(),run:0};
 
 /* ---- files ---- */
 function setFile(key,name,text,example){
@@ -534,12 +686,35 @@ function paintZone(key){
   if(f.skipped)bits.push(`${f.skipped} line${f.skipped>1?'s':''} skipped (no “=”)`);
   $('#meta'+key).textContent=bits.join(' · ');
 }
+function setEdges(key,name,text){
+  const p=parseEdges(text);
+  state['E'+key]=p?{name,...p}:{name,bad:true};
+  paintEdges(key);
+  compareAll();
+}
+function paintEdges(key){
+  const f=state['E'+key],z='E'+key;
+  $('#zone'+z).classList.toggle('loaded',!!f);
+  $('#name'+z).textContent=f?f.name:'No file';
+  $('#meta'+z).textContent=!f?'':f.bad?'Not an edge list: the header needs “source” and “target” columns. Ignored.':`${fmt(f.n)} edges`;
+}
 function readFile(key,file){
   const rd=new FileReader();
-  rd.onload=()=>setFile(key,file.name,String(rd.result),false);
+  rd.onload=()=>{
+    const text=String(rd.result);
+    /* a Cytoscape.csv dropped on a rules box goes to the matching edges box */
+    if(key[0]==='E')setEdges(key[1],file.name,text);
+    else if(isEdgeFile(text))setEdges(key,file.name,text);
+    else{
+      if(state.A&&state.A.example||state.B&&state.B.example){
+        ['A','B'].forEach(k=>{if(state[k]&&state[k].example){state[k]=null;paintZone(k);}});
+      }
+      setFile(key,file.name,text,false);
+    }
+  };
   rd.readAsText(file);
 }
-['A','B'].forEach(k=>{
+['A','B','EA','EB'].forEach(k=>{
   const zone=$('#zone'+k),input=$('#file'+k);
   input.addEventListener('change',e=>{if(e.target.files[0])readFile(k,e.target.files[0]);input.value='';});
   ['dragenter','dragover'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
@@ -547,12 +722,12 @@ function readFile(key,file){
   zone.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)readFile(k,f);});
 });
 function loadExample(){
-  state.A=state.B=null;
+  state.A=state.B=state.EA=state.EB=null;paintEdges('A');paintEdges('B');
   setFile('A','example_original.txt',SAMPLE_A,true);
   setFile('B','example_refactored.txt',SAMPLE_B,true);
 }
 $('#exampleBtn').onclick=loadExample;
-$('#swapBtn').onclick=()=>{[state.A,state.B]=[state.B,state.A];paintZone('A');paintZone('B');compareAll();};
+$('#swapBtn').onclick=()=>{[state.A,state.B]=[state.B,state.A];[state.EA,state.EB]=[state.EB,state.EA];['A','B'].forEach(k=>{paintZone(k);paintEdges(k);});compareAll();};
 
 /* ---- run comparison ---- */
 const tick=()=>new Promise(r=>setTimeout(r,0));
@@ -562,7 +737,7 @@ async function compareAll(){
   note.hidden=!anyEx;
   if(anyEx)note.innerHTML='Showing <strong>illustrative example data</strong> (a handful of rules chosen to show each kind of result). Drop your own original and refactored files above to replace it.';
   if(!state.A||!state.B){
-    state.rows=[];
+    state.run++;state.rows=[];state.focus=null;$('#coverage').hidden=$('#causes').hidden=true;
     $('#verdict').className='verdict';
     $('#verdict').innerHTML='<div style="grid-column:1/-1;color:var(--ink-2)">Add both files to compare. '+(state.A||state.B?'One more to go.':'')+'</div>';
     $('#fchips').innerHTML='';$('#list').innerHTML='';
@@ -571,16 +746,12 @@ async function compareAll(){
   const run=++state.run;
   const A=state.A.rules,B=state.B.rules;
   const targets=[...new Set([...A.keys(),...B.keys()])];
-  const ctx={nA:nodeSet(A),nB:nodeSet(B)};
+  const ok=f=>f&&!f.bad?f.edges:null;
+  const ctx=makeCtx(A,B,ok(state.EA),ok(state.EB));
+  ctx.fitA=ok(state.EA)?edgeFit(A,state.EA.edges):null;ctx.fitB=ok(state.EB)?edgeFit(B,state.EB.edges):null;
   const rows=[];let i=0;
   for(const t of targets){
-    const a=A.get(t)||null,b=B.get(t)||null;
-    let row;
-    if(a&&!b)row={target:t,status:'missing',a,b};
-    else if(!a&&b)row={target:t,status:'added',a,b};
-    else row={target:t,a,b,...compareRules(a,b)};
-    Object.assign(row,causeOf(row,ctx)||{});
-    rows.push(row);
+    rows.push(makeRow(t,A,B,ctx));
     if(++i%40===0){
       $('#verdict').className='verdict';
       $('#verdict').innerHTML=`<div class="progress" style="grid-column:1/-1">Comparing… ${fmt(i)} / ${fmt(targets.length)}</div>`;
@@ -590,37 +761,74 @@ async function compareAll(){
   }
   if(run!==state.run)return;
   rows.sort((x,y)=>STATUS_ORDER.indexOf(x.status)-STATUS_ORDER.indexOf(y.status)||x.target.localeCompare(y.target));
-  state.rows=rows;state.ctx=ctx;state.causes=new Set(CAUSES);state.open=new Set();state.limit=100;
-  setView(state.view,true);
-  renderVerdict();
-  renderCauses();
+  state.rows=rows;state.ctx=ctx;state.sum=summarize(rows);state.focus=null;state.open=new Set();state.limit=100;
+  setView(state.view==='custom'?'diff':state.view);
+  renderVerdict();renderCoverage();renderCauses();
 }
 
+/* one focus at a time: "cat:…", "sim:…" or "cause:…" */
+function inFocus(r){
+  if(!state.focus)return true;
+  const [kind,k]=state.focus.split(':');
+  if(kind==='cat')return r.cat===k;
+  if(kind==='cause')return r.cause===k;
+  return k==='samelogic'?r.sim==='identical'&&!MATCH.has(r.status):r.sim===k;
+}
+function focusLabel(){
+  const [kind,k]=state.focus.split(':');
+  return kind==='cat'?CAT_LABEL[k]:kind==='cause'?causeLabel(k):SIM_LABEL[k];
+}
+function setFocus(f){
+  state.focus=state.focus===f?null:f;
+  setView(state.focus&&!state.focus.startsWith('cause:')?'all':'diff');
+  renderCoverage();renderCauses();
+}
+['#coverage','#causes'].forEach(id=>$(id).addEventListener('click',e=>{
+  const b=e.target.closest('.ctile');if(b)setFocus(b.dataset.f);
+}));
+const share=(n,d)=>!d?'–':n===d?'100%':n===0?'0%':(()=>{const p=100*n/d;return p<0.1?'<0.1%':p>99.9?'>99.9%':p.toFixed(1)+'%';})();
+const tile=(f,cls,label,n,d,desc)=>`<button type="button" class="ctile ${cls}" data-f="${f}" aria-pressed="${state.focus===f}">
+  <span class="ch">${label}</span><span class="cn">${fmt(n)}<small>${share(n,d)}</small></span>${desc?`<span class="cd">${desc}</span>`:''}</button>`;
+
+function renderCoverage(){
+  const el=$('#coverage'),s=state.sum;
+  if(!s||!s.shared){el.hidden=true;return;}
+  el.hidden=false;
+  const both=s.cats.both_rule;
+  const cats=CATS.filter(k=>k!=='cat_other'||s.cats[k]);
+  el.innerHTML=`
+    <h3>Coverage map: where does each gene land?</h3>
+    <p class="csub">The <b>${fmt(s.shared)}</b> genes that are targets in both files. Click a group to list it.</p>
+    <div class="ctiles">${cats.map(k=>tile('cat:'+k,'k-'+k,CAT_LABEL[k],s.cats[k],s.shared,CAT_DESC[k])).join('')}</div>
+    ${both?`<h4>Where both have a rule, do they use the same regulators?</h4>
+    <p class="csub">Regulator-set overlap (Jaccard): mean <b>${s.mean.toFixed(2)}</b>, median <b>${s.median.toFixed(2)}</b> over ${fmt(both)} genes. For a refactor, expect these to be the same; low overlap is expected only when comparing a different method.</p>
+    <div class="ctiles">${['identical','partial','disjoint'].map(k=>tile('sim:'+k,'k-'+k,SIM_LABEL[k],s.sims[k],both,'')).join('')}${tile('sim:samelogic','k-samelogic',SIM_LABEL.samelogic,s.sameRegsDiff,both,'')}</div>`:''}`;
+}
 function renderCauses(){
   const el=$('#causes');
-  const bad=state.rows.filter(r=>r.cause);
-  if(!bad.length){el.hidden=true;return;}
+  const bad=state.rows.filter(r=>r.cause),e=!!state.ctx.eA;
+  if(!bad.length&&!e){el.hidden=true;return;}
   el.hidden=false;
-  const c={nodes:0,mixed:0,other:0};bad.forEach(r=>c[r.cause]++);
-  const {nA,nB}=state.ctx;
+  const c={};CAUSES.forEach(k=>c[k]=0);bad.forEach(r=>c[r.cause]++);
+  const {nA,nB,fitA,fitB}=state.ctx,inp=state.sum.inp;
   let onlyA=0,onlyB=0;nA.forEach(g=>{if(!nB.has(g))onlyA++;});nB.forEach(g=>{if(!nA.has(g))onlyB++;});
-  const sole=state.causes.size<CAUSES.length;
+  let control='';
+  if(e){
+    const d=inp.same-inp.sameMatch;
+    control=`<div class="control" style="--c:var(--${!inp.same?'neutral':d?'bad':'ok'})"><strong>${!inp.same?'No gene had the same inputs in both runs':d?`${fmt(d)} of ${fmt(inp.same)} genes with the same inputs have a different rule`:`Same inputs, same rule: all ${fmt(inp.same)} match`}</strong>
+      Of ${fmt(inp.n)} shared genes, <b>${fmt(inp.same)}</b> had the same available regulators in both runs, and <b>${fmt(inp.sameMatch)}</b> of those rules match (<b>${fmt(inp.sameRules)}</b> are real rules). The other <b>${fmt(inp.changed)}</b> had different regulators available, and <b>${fmt(inp.changedMatch)}</b> of those still match. Where inputs changed, this comparison cannot test the code: rerun both pipelines on the same input.</div>`;
+  }
+  const fit=[['Original',fitA],['Refactored',fitB]].filter(x=>x[1]!==null&&x[1]<0.995);
+  const warn=fit.length?`<p class="warnline"><b>Check the edge files.</b> ${fit.map(([n,f])=>`${n}: only ${(100*f).toFixed(1)}% of the regulators used in its rules appear in its Cytoscape.csv`).join('; ')}. It may belong to a different run.</p>`:'';
+  const one=(state.EA&&!state.EA.bad)!==(state.EB&&!state.EB.bad)&&!e?'<p class="warnline">Only one edge file is loaded. Add both to compare the inputs.</p>':'';
+  const tiles=CAUSES.filter(k=>k==='nodes'||k==='other'||c[k]||(k==='mixed'&&!e));
   el.innerHTML=`
     <h3>Why do rules differ? Is it missing nodes?</h3>
-    <p class="csub"><b>${fmt(c.nodes)}</b> of <b>${fmt(bad.length)}</b> mismatches are fully explained by genes that are missing from the other network${c.mixed?`, and <b>${fmt(c.mixed)}</b> more are partly explained`:''}. The remaining <b>${fmt(c.other)}</b> differ even though every gene they use exists in both networks.</p>
+    <p class="csub">${bad.length?`<b>${fmt(c.nodes)}</b> of <b>${fmt(bad.length)}</b> mismatches are explained by genes missing from the other network. ${e?'Judged from the regulators available in each run’s Cytoscape.csv.':'Judged from the rules files alone; add both Cytoscape.csv files above for a firmer answer.'}`:'No mismatches.'}</p>
+    ${warn}${one}${control}
     <div class="counts"><span>Nodes in original <b>${fmt(nA.size)}</b></span><span>in refactored <b>${fmt(nB.size)}</b></span><span>only in original <b>${fmt(onlyA)}</b></span><span>only in refactored <b>${fmt(onlyB)}</b></span></div>
-    <div class="ctiles">${CAUSES.map(k=>`<button type="button" class="ctile cs-${k}" data-c="${k}" aria-pressed="${sole&&state.causes.has(k)}">
-      <span class="ch">${CAUSE_LABEL[k]}</span>
-      <span class="cn">${fmt(c[k])}<small>${Math.round(100*c[k]/bad.length)}%</small></span>
-      <span class="cd">${CAUSE_DESC[k]}</span></button>`).join('')}</div>`;
+    ${bad.length?`<div class="ctiles">${tiles.map(k=>tile('cause:'+k,'cs-'+k,causeLabel(k),c[k],bad.length,causeDesc(k))).join('')}</div>`:''}`;
 }
-$('#causes').addEventListener('click',e=>{
-  const b=e.target.closest('.ctile');if(!b)return;
-  const k=b.dataset.c;
-  state.causes=(state.causes.size===1&&state.causes.has(k))?new Set(CAUSES):new Set([k]);
-  state.limit=100;
-  renderCauses();renderList();
-});
 
 function counts(){const c={};STATUS_ORDER.forEach(s=>c[s]=0);state.rows.forEach(r=>c[r.status]++);return c;}
 function pct(m,n){if(!n)return '–';if(m===n)return '100%';return Math.min(99.9,Math.floor(1000*m/n)/10).toFixed(1)+'%';}
@@ -670,10 +878,11 @@ function setView(v,keepChips){
 document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>setView(b.dataset.v));
 function renderChips(){
   const c=counts();
-  $('#fchips').innerHTML=STATUS_ORDER.filter(s=>c[s]).map(s=>
+  $('#fchips').innerHTML=(state.focus?`<button type="button" class="focus" id="focusBtn" title="Clear this filter">${esc(focusLabel())} ✕</button>`:'')+STATUS_ORDER.filter(s=>c[s]).map(s=>
     `<button type="button" class="fchip s-${s}" data-s="${s}" aria-pressed="${state.chips.has(s)}" title="${TIP[s]}"><span class="d"></span>${LABEL[s]} <b>${fmt(c[s])}</b></button>`).join('');
 }
 $('#fchips').addEventListener('click',e=>{
+  if(e.target.closest('#focusBtn')){setFocus(state.focus);return;}
   const b=e.target.closest('.fchip');if(!b)return;
   const s=b.dataset.s;
   state.chips.has(s)?state.chips.delete(s):state.chips.add(s);
@@ -684,7 +893,7 @@ $('#fchips').addEventListener('click',e=>{
 $('#search').addEventListener('input',e=>{state.q=e.target.value.trim().toLowerCase();state.limit=100;renderList();});
 function visible(){
   const q=state.q;
-  return state.rows.filter(r=>state.chips.has(r.status)&&(!r.cause||state.causes.has(r.cause))&&(!q||r.target.toLowerCase().includes(q)||(r.a&&r.a.rhs.toLowerCase().includes(q))||(r.b&&r.b.rhs.toLowerCase().includes(q))));
+  return state.rows.filter(r=>state.chips.has(r.status)&&inFocus(r)&&(!q||r.target.toLowerCase().includes(q)||(r.a&&r.a.rhs.toLowerCase().includes(q))||(r.b&&r.b.rhs.toLowerCase().includes(q))));
 }
 
 /* ---- rendering rows ---- */
@@ -708,6 +917,12 @@ function hlMaps(r){
   return [ha,hb];
 }
 const list=(a,n=6)=>a.length>n?a.slice(0,n).join(', ')+` +${a.length-n} more`:a.join(', ');
+function inputsText(r){
+  const i=r.inputs,g=a=>esc(list([...new Set(a)],6));
+  if(i.same)return `<b>same inputs</b> in both runs (${i.nA})`;
+  const b=[];if(i.lost.length)b.push(`− ${g(i.lostG)}`);if(i.gained.length)b.push(`+ ${g(i.gainedG)}`);
+  return `available regulators <b>${i.nA} → ${i.nB}</b> (${b.join(', ')})`;
+}
 function deltaHTML(r){
   const p=[];
   if(r.status==='equivalent')p.push('<b>Same logic</b>, written differently');
@@ -719,6 +934,7 @@ function deltaHTML(r){
     if(r.flipped&&r.flipped.length)p.push(`⇄ sign: ${esc(list(r.flipped))}`);
     if(r.absentA&&r.absentA.length)p.push(`not a node in refactored: <b>${esc(list(r.absentA))}</b>`);
     if(r.absentB&&r.absentB.length)p.push(`not a node in original: <b>${esc(list(r.absentB))}</b>`);
+    if(r.inputs)p.push(inputsText(r));
     if(r.status==='missing')p.push(r.cause==='nodes'?'gene is not in the refactored network at all':'gene is in the refactored network only as a regulator');
     if(r.status==='added')p.push(r.cause==='nodes'?'gene is not in the original network at all':'gene is in the original network only as a regulator');
   }
@@ -749,7 +965,9 @@ function detailHTML(r){
   if(r.absentA&&r.absentA.length)facts.push(`Not a node in the refactored network: <b>${esc(list(r.absentA,12))}</b>`);
   if(r.absentB&&r.absentB.length)facts.push(`Not a node in the original network: <b>${esc(list(r.absentB,12))}</b>`);
   if(r.fix&&r.fix.length)facts.push(`Rules agree if <b>${r.fix.map(([g,v])=>esc(g)+'='+v).join(', ')}</b>`);
-  if(r.cause)facts.push(`Cause: <b>${CAUSE_LABEL[r.cause]}</b>`);
+  if(r.inputs)facts.push(inputsText(r));
+  if(r.jac!==undefined)facts.push(`Regulator overlap: <b>${r.jac.toFixed(2)}</b>`);
+  if(r.cause)facts.push(`Cause: <b>${causeLabel(r.cause)}</b>`);
   if(r.how)facts.push(`Matched by <b>${r.how}</b>`);
   if(r.names)facts.push(`Regulators across both: <b>${r.names.length}</b>`);
   let ex='';
@@ -775,7 +993,7 @@ function renderList(){
     const [ha,hb]=hlMaps(r),open=state.open.has(r.target);
     return `<div class="grid row s-${r.status}${open?' open':''}" data-t="${esc(r.target)}" role="button" tabindex="0" aria-expanded="${open}">
       <div class="c-t">${esc(r.target)}</div>
-      <div><span class="pill s-${r.status}" title="${TIP[r.status]}">${LABEL[r.status]}</span>${r.cause?`<div class="ctag cs-${r.cause}" title="${esc(CAUSE_DESC[r.cause])}">${CAUSE_LABEL[r.cause]}</div>`:''}</div>
+      <div><span class="pill s-${r.status}" title="${TIP[r.status]}">${LABEL[r.status]}</span>${r.cause?`<div class="ctag cs-${r.cause}" title="${esc(causeDesc(r.cause))}">${causeLabel(r.cause)}</div>`:''}</div>
       <div class="rule">${ruleHTML(r.a,ha)}</div>
       <div class="rule">${ruleHTML(r.b,hb)}${deltaHTML(r)}</div>
       ${open?detailHTML(r):''}
@@ -798,8 +1016,8 @@ $('#list').addEventListener('keydown',e=>{
 $('#csvBtn').onclick=()=>{
   try{
     const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-    const lines=[['Target','Status','Cause','Original','Refactored','Only in original','Only in refactored','Sign flipped','Agreement','Not a node in refactored','Not a node in original']];
-    state.rows.forEach(r=>lines.push([r.target,LABEL[r.status],r.cause?CAUSE_LABEL[r.cause]:'',r.a?r.a.rhs:'',r.b?r.b.rhs:'',(r.removed||[]).join(' '),(r.added||[]).join(' '),(r.flipped||[]).join(' '),r.agree!==undefined?Math.round(r.agree*1000)/10+'%':'',(r.absentA||[]).join(' '),(r.absentB||[]).join(' ')]));
+    const lines=[['Target','Status','Coverage group','Cause','Regulator overlap (Jaccard)','Original','Refactored','Only in original','Only in refactored','Sign flipped','Agreement','Not a node in refactored','Not a node in original','Same inputs','Inputs lost','Inputs gained']];
+    state.rows.forEach(r=>lines.push([r.target,LABEL[r.status],r.cat?CAT_LABEL[r.cat]:'',r.cause?causeLabel(r.cause):'',r.jac!==undefined?r.jac.toFixed(3):'',r.a?r.a.rhs:'',r.b?r.b.rhs:'',(r.removed||[]).join(' '),(r.added||[]).join(' '),(r.flipped||[]).join(' '),r.agree!==undefined?Math.round(r.agree*1000)/10+'%':'',(r.absentA||[]).join(' '),(r.absentB||[]).join(' '),r.inputs?(r.inputs.same?'yes':'no'):'',r.inputs?r.inputs.lost.map(k=>k.replace('|',':')).join(' '):'',r.inputs?r.inputs.gained.map(k=>k.replace('|',':')).join(' '):'']));
     const blob=new Blob([lines.map(l=>l.map(q).join(',')).join('\n')],{type:'text/csv'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rules_comparison.csv';document.body.appendChild(a);a.click();a.remove();
   }catch(e){alert('Could not export the CSV from this page.');}
