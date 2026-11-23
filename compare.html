@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>GRN Rule Comparator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --surface-2:#eef1f6; --border:#dce1ea;
+  --ink:#1a2130; --ink-2:#54607a; --ink-3:#8892a8;
+  --accent:#3b6fd4;
+  --ok:#1a9d6a; --eq:#1e8a96; --bad:#d1495b; --orange:#d9622b;
+  --warn:#b8801a; --info:#3b6fd4; --neutral:#7d879e; --plum:#7a5bc7;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  --shadow:0 1px 2px rgba(20,30,55,.05),0 4px 16px rgba(20,30,55,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e131f; --surface:#161d2c; --surface-2:#1e2636; --border:#2a3448;
+    --ink:#e7ebf4; --ink-2:#a4aec5; --ink-3:#6c7690;
+    --accent:#6f9bff;
+    --ok:#42c68b; --eq:#4cc3d1; --bad:#f0788a; --orange:#f08a55;
+    --warn:#d99a3c; --info:#6f9bff; --neutral:#93a0ba; --plum:#a68bf0;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e131f; --surface:#161d2c; --surface-2:#1e2636; --border:#2a3448;
+  --ink:#e7ebf4; --ink-2:#a4aec5; --ink-3:#6c7690;
+  --accent:#6f9bff;
+  --ok:#42c68b; --eq:#4cc3d1; --bad:#f0788a; --orange:#f08a55;
+  --warn:#d99a3c; --info:#6f9bff; --neutral:#93a0ba; --plum:#a68bf0;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+h1,h2,h3,h4,h5{margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.01em}
+a{color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+button{font-family:inherit}
+
+/* status colour hook: any element with .s-<status> gets --c */
+.s-identical{--c:var(--ok)} .s-equivalent{--c:var(--eq)} .s-different{--c:var(--bad)}
+.s-lost{--c:var(--orange)} .s-unverified{--c:var(--warn)} .s-gained{--c:var(--info)}
+.s-typechange{--c:var(--neutral)} .s-missing{--c:var(--plum)} .s-added{--c:var(--plum)}
+
+/* header */
+header.top{display:flex;flex-wrap:wrap;gap:16px 26px;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.brand h1{font-size:26px}
+.brand p{margin:5px 0 0;color:var(--ink-2);font-size:13.5px;max-width:60ch}
+.headtools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.switch{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--surface)}
+.switch a{font-size:13px;font-weight:500;padding:7px 14px;color:var(--ink-2);text-decoration:none}
+.switch a:hover{color:var(--ink)}
+.switch a.on{background:var(--accent);color:#fff}
+.btn{font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--ink);
+  padding:8px 13px;border-radius:8px;cursor:pointer;transition:border-color .15s}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.zone:focus-within,.fchip:focus-visible,.seg button:focus-visible,.row:focus-visible,input:focus-visible,summary:focus-visible,.switch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.note{font-size:12.5px;color:var(--ink-2);background:color-mix(in srgb,var(--warn) 13%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);border-radius:8px;padding:9px 12px;margin-bottom:16px}
+
+/* drop zones */
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+@media(max-width:680px){.zones{grid-template-columns:1fr}}
+.zone{position:relative;display:flex;flex-direction:column;gap:4px;padding:16px 18px;border:1.5px dashed var(--border);border-radius:13px;
+  background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.zone:hover,.zone.drag{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.zone.loaded{border-style:solid}
+.ztag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.zname{font-family:var(--mono);font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.zmeta{font-size:12.5px;color:var(--ink-2);min-height:1.5em}
+.zhint{font-size:12px;color:var(--ink-3)}
+.zone.loaded .zhint{display:none}
+.ztools{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+
+/* verdict */
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:6px 26px;align-items:center;background:var(--surface);border:1px solid var(--border);
+  border-radius:13px;padding:18px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+@media(max-width:620px){.verdict{grid-template-columns:1fr}}
+.verdict .big{font-family:var(--mono);font-size:42px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:var(--c)}
+.verdict .biglbl{font-size:12px;color:var(--ink-3);margin-top:6px;max-width:16ch}
+.verdict.tone-ok{--c:var(--ok)} .verdict.tone-warn{--c:var(--warn)} .verdict.tone-bad{--c:var(--bad)}
+.verdict h2{font-size:18px}
+.verdict .sub{color:var(--ink-2);font-size:13.5px;margin:4px 0 0;max-width:72ch}
+.counts{display:flex;flex-wrap:wrap;gap:4px 18px;margin:12px 0 0;font-size:12.5px;color:var(--ink-2)}
+.counts b{font-family:var(--mono);color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-2);margin-top:14px;grid-column:1/-1}
+.stack span{display:block;background:var(--c);min-width:2px}
+.progress{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:10px}
+.seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;color:var(--ink-2);font-size:13px;font-weight:500;padding:7px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.search{flex:1;min-width:180px;max-width:340px;font-family:var(--mono);font-size:13px;padding:8px 11px;border:1px solid var(--border);
+  border-radius:9px;background:var(--surface);color:var(--ink)}
+.fchips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.fchip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;padding:5px 11px 5px 9px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.fchip .d{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.fchip b{font-family:var(--mono);font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.fchip[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface));color:var(--ink)}
+
+/* rows */
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:13px;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:150px 138px minmax(0,1fr) minmax(0,1fr);gap:0 16px;min-width:820px}
+.thead{padding:10px 16px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);border-bottom:1px solid var(--border)}
+.row{padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;align-items:start}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface-2)}
+.row.open{background:var(--surface-2)}
+.c-t{font-family:var(--mono);font-weight:600;font-size:13px;overflow-wrap:anywhere}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;
+  color:color-mix(in srgb,var(--c) 72%,var(--ink));background:color-mix(in srgb,var(--c) 14%,var(--surface))}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.rule{font-family:var(--mono);font-size:12.5px;line-height:1.65;overflow-wrap:anywhere}
+.rule .op{color:var(--ink-3)} .rule .neg{color:var(--bad);font-weight:600}
+.rule .marker,.empty{font-style:italic;color:var(--ink-3)}
+.g.rm{background:color-mix(in srgb,var(--bad) 17%,transparent);color:color-mix(in srgb,var(--bad) 75%,var(--ink));border-radius:3px;padding:0 2px}
+.g.ad{background:color-mix(in srgb,var(--ok) 17%,transparent);color:color-mix(in srgb,var(--ok) 75%,var(--ink));border-radius:3px;padding:0 2px}
+.g.fl{background:color-mix(in srgb,var(--plum) 17%,transparent);color:color-mix(in srgb,var(--plum) 75%,var(--ink));border-radius:3px;padding:0 2px}
+.delta{margin-top:5px;font-size:12px;color:var(--ink-2);font-family:var(--sans)}
+.delta b{font-weight:600;color:var(--ink)}
+.more{display:flex;justify-content:center;padding:14px}
+.none{padding:28px 18px;text-align:center;color:var(--ink-3)}
+
+/* detail */
+.detail{grid-column:1/-1;margin:10px 0 2px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:default}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.dcols{grid-template-columns:1fr}}
+.detail h5{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:8px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:12px;font-size:12.5px;color:var(--ink-2)}
+.facts b{font-weight:600;color:var(--ink)}
+.ladder{display:flex;flex-direction:column}
+.term{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:8px 10px}
+.orjoin{display:flex;align-items:center;gap:8px;padding:3px 0 3px 4px;color:var(--warn);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.orjoin::before,.orjoin::after{content:"";height:1px;background:var(--border);flex:1}
+.lit{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:12.5px;font-weight:500;padding:4px 9px;border-radius:7px;border:1px solid transparent}
+.lit.act{--l:var(--ok)} .lit.inh{--l:var(--bad)}
+.lit{background:color-mix(in srgb,var(--l) 13%,var(--surface));color:color-mix(in srgb,var(--l) 72%,var(--ink));border-color:color-mix(in srgb,var(--l) 28%,transparent)}
+.lit .not{font-weight:700}
+.lit.only{outline:2px dashed var(--warn);outline-offset:1px}
+.lit.flip{outline:2px solid var(--plum);outline-offset:1px}
+.andsym{color:var(--ink-3);font-family:var(--mono);font-size:11px}
+.ex{margin-top:14px;font-size:12.5px;color:var(--ink-2)}
+.ex code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;margin-right:4px}
+
+details.how{margin-top:22px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px 18px}
+details.how summary{cursor:pointer;font-weight:600;font-size:13.5px}
+details.how dl{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;margin:14px 0 0;font-size:13px;align-items:baseline}
+details.how dt{margin:0}
+details.how dd{margin:0;color:var(--ink-2)}
+.foot{margin-top:24px;font-size:12px;color:var(--ink-3);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>GRN Rule Comparator</h1>
+      <p>Upload the original rules file and the refactored one. See which rules match, which are the same logic written differently, and which actually changed.</p>
+    </div>
+    <div class="headtools">
+      <nav class="switch" aria-label="Tool">
+        <a href="index.html">Inspector</a>
+        <a href="compare.html" class="on" aria-current="page">Compare</a>
+      </nav>
+      <button class="btn" id="themeBtn" type="button" title="Toggle theme">◐</button>
+    </div>
+  </header>
+
+  <div class="note" id="exNote" hidden></div>
+
+  <section class="zones" aria-label="Rules files">
+    <label class="zone" id="zoneA" for="fileA">
+      <input class="sr" type="file" id="fileA" accept=".txt,.tsv,.csv,text/plain">
+      <span class="ztag">Original</span>
+      <span class="zname" id="nameA">No file</span>
+      <span class="zmeta" id="metaA"></span>
+      <span class="zhint">Drop the original <span style="font-family:var(--mono)">rules.txt</span> here, or click to choose</span>
+    </label>
+    <label class="zone" id="zoneB" for="fileB">
+      <input class="sr" type="file" id="fileB" accept=".txt,.tsv,.csv,text/plain">
+      <span class="ztag">Refactored</span>
+      <span class="zname" id="nameB">No file</span>
+      <span class="zmeta" id="metaB"></span>
+      <span class="zhint">Drop the refactored <span style="font-family:var(--mono)">rules.txt</span> here, or click to choose</span>
+    </label>
+  </section>
+  <div class="ztools">
+    <button class="btn" id="swapBtn" type="button">Swap original ⇄ refactored</button>
+    <button class="btn" id="exampleBtn" type="button">Load example</button>
+  </div>
+
+  <section id="results" aria-live="polite">
+    <div class="verdict" id="verdict"></div>
+
+    <div class="toolbar">
+      <div class="seg" id="seg" role="group" aria-label="Show">
+        <button type="button" data-v="diff" aria-pressed="true">Differences</button>
+        <button type="button" data-v="match" aria-pressed="false">Matches</button>
+        <button type="button" data-v="all" aria-pressed="false">All</button>
+      </div>
+      <input class="search" id="search" type="search" placeholder="Search target or gene…" aria-label="Search target or gene" autocomplete="off">
+      <button class="btn" id="csvBtn" type="button" style="margin-left:auto">Export CSV</button>
+    </div>
+    <div class="fchips" id="fchips"></div>
+
+    <div class="tablewrap">
+      <div class="grid thead"><div>Target</div><div>Status</div><div>Original</div><div>Refactored</div></div>
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <details class="how">
+    <summary>How rules are matched</summary>
+    <dl>
+      <dt><span class="pill s-identical">Identical</span></dt><dd>The rule text is the same (ignoring spaces), or both sides are the same “Undefined” / “Too many source nodes” marker.</dd>
+      <dt><span class="pill s-equivalent">Equivalent</span></dt><dd>Same logic, written differently: reordered terms, De Morgan forms like <span style="font-family:var(--mono)">!(A || B)</span>, or redundant terms. Proven by normalising both rules, or by checking every input combination (up to 12 regulators).</dd>
+      <dt><span class="pill s-different">Different</span></dt><dd>The two rules give different outputs for some input. The row shows the regulators that were added, removed or flipped, the share of inputs on which they agree, and example inputs where they diverge.</dd>
+      <dt><span class="pill s-unverified">Unverified</span></dt><dd>More than 12 regulators and no difference turned up in 2,048 sampled inputs, but it can't be proven. It is not counted as a match.</dd>
+      <dt><span class="pill s-lost">Rule lost</span></dt><dd>The original has a real rule; the refactored file has Undefined or Too many source nodes.</dd>
+      <dt><span class="pill s-gained">Rule gained</span></dt><dd>The reverse: the original had no rule, the refactored file does.</dd>
+      <dt><span class="pill s-typechange">Marker changed</span></dt><dd>Both sides have no rule, but a different marker (Undefined vs Too many source nodes).</dd>
+      <dt><span class="pill s-missing">Only in original</span> <span class="pill s-added">Only in refactored</span></dt><dd>The target appears in just one file.</dd>
+    </dl>
+  </details>
+
+  <p class="foot">Everything runs in your browser. Nothing is uploaded.</p>
+</div>
+
+<script>
+/*CORE-START*/
+const CAP=512, EXH=12, SAMPLES=2048;
+const STATUS_ORDER=['different','lost','unverified','missing','added','gained','typechange','equivalent','identical'];
+const MATCH=new Set(['identical','equivalent']);
+
+function norm(s){return s.replace(/\s+/g,' ').trim();}
+function classify(rhs){
+  const t=norm(rhs).toLowerCase();
+  if(t==='undefined')return 'undefined';
+  if(/^too many/.test(t))return 'toomany';
+  return 'expr';
+}
+function parseRules(text){
+  const rules=new Map();let dups=0,skipped=0;
+  for(const raw of text.split(/\r?\n/)){
+    const l=raw.trim();if(!l||l[0]==='#')continue;
+    const i=l.indexOf('=');if(i<0){skipped++;continue;}
+    const t=l.slice(0,i).trim(),rhs=l.slice(i+1).trim();
+    if(!t){skipped++;continue;}
+    if(rules.has(t))dups++;
+    rules.set(t,{rhs,type:classify(rhs)});
+  }
+  return {rules,dups,skipped};
+}
+
+/* ---- parsing: ! binds tightest, then AND, then OR ---- */
+function parseExpr(rhs){
+  const t=rhs.match(/&&|\|\||&|\||!|\(|\)|[^\s&|!()]+/g)||[];
+  let i=0;
+  const isOp=x=>/^(&&|\|\||&|\||\(|\))$/.test(x);
+  function orE(){const c=[andE()];while(t[i]==='||'||t[i]==='|'){i++;c.push(andE());}return c.length===1?c[0]:{k:'or',c};}
+  function andE(){const c=[notE()];while(t[i]==='&&'||t[i]==='&'){i++;c.push(notE());}return c.length===1?c[0]:{k:'and',c};}
+  function notE(){
+    if(t[i]==='!'){i++;return {k:'not',c:[notE()]};}
+    if(t[i]==='('){i++;const e=orE();if(t[i]!==')')throw new Error('paren');i++;return e;}
+    const x=t[i++];
+    if(x===undefined||x==='!'||isOp(x))throw new Error('syntax');
+    if(/^(1|true)$/i.test(x))return {k:'const',v:1};
+    if(/^(0|false)$/i.test(x))return {k:'const',v:0};
+    if(!/^[A-Za-z0-9_.\-:]+$/.test(x))throw new Error('token');
+    return {k:'var',n:x};
+  }
+  const e=orE();if(i<t.length)throw new Error('trailing');return e;
+}
+function varsOf(n,s=new Set()){if(n.k==='var')s.add(n.n);else if(n.c)n.c.forEach(c=>varsOf(c,s));return s;}
+function signsOf(n,pol=1,m=new Map()){
+  if(n.k==='var'){const e=m.get(n.n)||{p:0,n:0};e[pol===1?'p':'n']++;m.set(n.n,e);}
+  else if(n.k==='not')signsOf(n.c[0],-pol,m);
+  else if(n.c)n.c.forEach(c=>signsOf(c,pol,m));
+  return m;
+}
+const signLabel=e=>e.p&&e.n?'both':e.n?'inh':'act';
+
+/* ---- normal form: DNF with De Morgan, contradictions dropped, absorption ---- */
+function mergeTerm(x,y){
+  const s=new Set(x);
+  for(const l of y){const c=l[0]==='!'?l.slice(1):'!'+l;if(s.has(c))return null;s.add(l);}
+  return [...s].sort();
+}
+function dnfOf(n,neg){
+  switch(n.k){
+    case 'var':return [[(neg?'!':'')+n.n]];
+    case 'const':{const v=neg?1-n.v:n.v;return v?[[]]:[];}
+    case 'not':return dnfOf(n.c[0],!neg);
+    default:{
+      const isAnd=(n.k==='and')!==neg;
+      const parts=n.c.map(c=>dnfOf(c,neg));
+      if(!isAnd){const out=[].concat(...parts);if(out.length>CAP)throw new Error('cap');return out;}
+      let acc=[[]];
+      for(const p of parts){
+        const next=[];
+        for(const x of acc)for(const y of p){const m=mergeTerm(x,y);if(m)next.push(m);if(next.length>CAP)throw new Error('cap');}
+        acc=next;
+      }
+      return acc;
+    }
+  }
+}
+function normalizeDNF(terms){
+  const seen=new Set(),uniq=[];
+  for(const t of terms){const k=t.join('&');if(!seen.has(k)){seen.add(k);uniq.push(t);}}
+  if(uniq.some(t=>t.length===0))return [[]];
+  const keep=uniq.filter(t=>!uniq.some(s=>s!==t&&s.length<t.length&&s.every(l=>t.includes(l))));
+  keep.sort((a,b)=>a.length-b.length||a.join('&').localeCompare(b.join('&')));
+  return keep;
+}
+function canonStr(terms){
+  if(!terms.length)return '0';
+  if(terms.length===1&&!terms[0].length)return '1';
+  return terms.map(t=>t.join(' & ')).join(' | ');
+}
+
+/* ---- truth-table / sampled check ---- */
+function compile(n,idx){
+  switch(n.k){
+    case 'var':{const j=idx.get(n.n);return a=>a[j];}
+    case 'const':return ()=>n.v;
+    case 'not':{const f=compile(n.c[0],idx);return a=>1-f(a);}
+    case 'and':{const fs=n.c.map(c=>compile(c,idx));return a=>{for(const f of fs)if(!f(a))return 0;return 1;};}
+    default:{const fs=n.c.map(c=>compile(c,idx));return a=>{for(const f of fs)if(f(a))return 1;return 0;};}
+  }
+}
+function semantic(fa,fb,n){
+  const exhaustive=n<=EXH,total=exhaustive?(1<<n):SAMPLES;
+  const a=new Array(n).fill(0);let diffs=0,seed=123456789;const ex=[];
+  for(let m=0;m<total;m++){
+    if(exhaustive){for(let j=0;j<n;j++)a[j]=(m>>j)&1;}
+    else if(m<2){a.fill(m);}
+    else{for(let j=0;j<n;j++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;a[j]=(seed>>>16)&1;}}
+    const x=fa(a),y=fb(a);
+    if(x!==y){diffs++;if(ex.length<3)ex.push({a:a.slice(),x,y});}
+  }
+  return {total,diffs,ex,exhaustive};
+}
+
+/* ---- compare one target ---- */
+function compareRules(a,b){
+  const info={removed:[],added:[],flipped:[]};
+  if(a.type!=='expr'||b.type!=='expr'){
+    if(a.type===b.type)return {status:'identical',...info};
+    if(a.type==='expr')return {status:'lost',...info};
+    if(b.type==='expr')return {status:'gained',...info};
+    return {status:'typechange',...info};
+  }
+  if(norm(a.rhs)===norm(b.rhs))return {status:'identical',...info};
+  let A,B;
+  try{A=parseExpr(a.rhs);B=parseExpr(b.rhs);}
+  catch(e){return {status:'different',note:'Could not parse one side as Boolean logic, so the two were compared as plain text.',...info};}
+  const sa=signsOf(A),sb=signsOf(B);
+  for(const [g,e] of sa){
+    if(!sb.has(g))info.removed.push(g);
+    else if(signLabel(e)!==signLabel(sb.get(g)))info.flipped.push(g);
+  }
+  for(const g of sb.keys())if(!sa.has(g))info.added.push(g);
+  let ca=null,cb=null;
+  try{ca=canonStr(normalizeDNF(dnfOf(A,false)));cb=canonStr(normalizeDNF(dnfOf(B,false)));}catch(e){ca=cb=null;}
+  if(ca!==null&&ca===cb)return {status:'equivalent',how:'normal form',...info};
+  const names=[...new Set([...varsOf(A),...varsOf(B)])].sort();
+  const idx=new Map(names.map((g,i)=>[g,i]));
+  const r=semantic(compile(A,idx),compile(B,idx),names.length);
+  const base={...info,names,agree:(r.total-r.diffs)/r.total,exhaustive:r.exhaustive,total:r.total,diffs:r.diffs,examples:r.ex};
+  if(r.diffs===0)return {status:r.exhaustive?'equivalent':'unverified',how:r.exhaustive?'truth table':'sampled',...base};
+  return {status:'different',...base};
+}
+/*CORE-END*/
+
+/* ================= UI ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n.toLocaleString('en-US');
+const LABEL={identical:'Identical',equivalent:'Equivalent',different:'Different',unverified:'Unverified',lost:'Rule lost',gained:'Rule gained',typechange:'Marker changed',missing:'Only in original',added:'Only in refactored'};
+const TIP={identical:'Same text',equivalent:'Same logic, written differently',different:'Logic differs',unverified:'No difference found in sampled checks, but not proven',lost:'Original had a rule; refactored has none',gained:'Original had no rule; refactored has one',typechange:'Undefined vs Too many source nodes',missing:'Target absent from the refactored file',added:'Target absent from the original file'};
+const DIFFS=['different','lost','unverified','missing','added','gained','typechange'];
+const MATCHES=['equivalent','identical'];
+
+const SAMPLE_A=`RAD52 = ABL1 && WRN
+DCLRE1A = ATM || ATR
+RAD50 = ATM && RBL2
+CFH = !SIRT1
+HSPB6 = !PRKACA
+SEMA3F = Undefined
+CFLAR = Too many source nodes
+LIG3 = !CDK2 && !TOP1
+MEOX1 = PAX1 || PAX3
+ABL2 = ABL1 || ABL2 || BTF3 || HCK && PDGFRB || SRC
+GLI1 = PTCH1 && AKT2
+HOXA11 = KDM6A && KMT2A && !YY1
+SYK = VAV1 || FYN
+CDK1 = CDC25C || MYBL2 && PTTG1 || MYBL2 && CDC25A || PTTG1 && CDC25A || CDC25A && E2F1
+KLHL13 = Undefined
+ACSL1 = PPARA && RB1
+MAPK3 = ARAF || CALM3
+TFPI = FGF2 && !MEOX2`;
+const SAMPLE_B=`RAD52 = ABL1 || WRN
+DCLRE1A = ATR || ATM
+RAD50 = RBL2 && ATM
+CFH = !SIRT1
+HSPB6 = !PRKACA
+SEMA3F = Undefined
+CFLAR = Undefined
+LIG3 = !(CDK2 || TOP1)
+MEOX1 = PAX1 || PAX3
+ABL2 = ABL1
+GLI1 = Undefined
+HOXA11 = KDM6A && KMT2A && YY1
+SYK = VAV1 || FYN || VAV1 && FYN
+CDK1 = CDC25C || MYBL2 && PTTG1 || MYBL2 && CDC25A || PTTG1 && CDC25A || CDC25A && E2F1
+KLHL13 = CUL3
+ACSL1 = PPARA || RB1
+MAPK3 = ARAF || CALM3
+HLA-A = IRF1`;
+
+const state={A:null,B:null,rows:[],view:'diff',chips:new Set(DIFFS),q:'',limit:100,open:new Set(),run:0};
+
+/* ---- files ---- */
+function setFile(key,name,text,example){
+  const p=parseRules(text);
+  state[key]={name,example:!!example,...p};
+  paintZone(key);
+  compareAll();
+}
+function paintZone(key){
+  const f=state[key];
+  $('#zone'+key).classList.toggle('loaded',!!f);
+  $('#name'+key).textContent=f?f.name:'No file';
+  if(!f){$('#meta'+key).textContent='';return;}
+  const bits=[`${fmt(f.rules.size)} rules`];
+  if(f.dups)bits.push(`${f.dups} duplicate target${f.dups>1?'s':''} (last one used)`);
+  if(f.skipped)bits.push(`${f.skipped} line${f.skipped>1?'s':''} skipped (no “=”)`);
+  $('#meta'+key).textContent=bits.join(' · ');
+}
+function readFile(key,file){
+  const rd=new FileReader();
+  rd.onload=()=>setFile(key,file.name,String(rd.result),false);
+  rd.readAsText(file);
+}
+['A','B'].forEach(k=>{
+  const zone=$('#zone'+k),input=$('#file'+k);
+  input.addEventListener('change',e=>{if(e.target.files[0])readFile(k,e.target.files[0]);input.value='';});
+  ['dragenter','dragover'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
+  ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
+  zone.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)readFile(k,f);});
+});
+function loadExample(){
+  state.A=state.B=null;
+  setFile('A','example_original.txt',SAMPLE_A,true);
+  setFile('B','example_refactored.txt',SAMPLE_B,true);
+}
+$('#exampleBtn').onclick=loadExample;
+$('#swapBtn').onclick=()=>{[state.A,state.B]=[state.B,state.A];paintZone('A');paintZone('B');compareAll();};
+
+/* ---- run comparison ---- */
+const tick=()=>new Promise(r=>setTimeout(r,0));
+async function compareAll(){
+  const note=$('#exNote');
+  const anyEx=(state.A&&state.A.example)||(state.B&&state.B.example);
+  note.hidden=!anyEx;
+  if(anyEx)note.innerHTML='Showing <strong>illustrative example data</strong> (a handful of rules chosen to show each kind of result). Drop your own original and refactored files above to replace it.';
+  if(!state.A||!state.B){
+    state.rows=[];
+    $('#verdict').className='verdict';
+    $('#verdict').innerHTML='<div style="grid-column:1/-1;color:var(--ink-2)">Add both files to compare. '+(state.A||state.B?'One more to go.':'')+'</div>';
+    $('#fchips').innerHTML='';$('#list').innerHTML='';
+    return;
+  }
+  const run=++state.run;
+  const A=state.A.rules,B=state.B.rules;
+  const targets=[...new Set([...A.keys(),...B.keys()])];
+  const rows=[];let i=0;
+  for(const t of targets){
+    const a=A.get(t)||null,b=B.get(t)||null;
+    if(a&&!b)rows.push({target:t,status:'missing',a,b});
+    else if(!a&&b)rows.push({target:t,status:'added',a,b});
+    else rows.push({target:t,a,b,...compareRules(a,b)});
+    if(++i%40===0){
+      $('#verdict').className='verdict';
+      $('#verdict').innerHTML=`<div class="progress" style="grid-column:1/-1">Comparing… ${fmt(i)} / ${fmt(targets.length)}</div>`;
+      await tick();
+      if(run!==state.run)return;
+    }
+  }
+  if(run!==state.run)return;
+  rows.sort((x,y)=>STATUS_ORDER.indexOf(x.status)-STATUS_ORDER.indexOf(y.status)||x.target.localeCompare(y.target));
+  state.rows=rows;state.open=new Set();state.limit=100;
+  setView(state.view,true);
+  renderVerdict();
+}
+
+function counts(){const c={};STATUS_ORDER.forEach(s=>c[s]=0);state.rows.forEach(r=>c[r.status]++);return c;}
+function pct(m,n){if(!n)return '–';if(m===n)return '100%';return Math.min(99.9,Math.floor(1000*m/n)/10).toFixed(1)+'%';}
+
+function renderVerdict(){
+  const c=counts();
+  const shared=state.rows.length-c.missing-c.added;
+  const match=c.identical+c.equivalent;
+  const bad=shared-match;
+  const only=c.missing+c.added;
+  const tone=(bad===0&&only===0)?'ok':(c.different+c.lost+c.unverified>0?'bad':'warn');
+  let h,sub;
+  if(bad===0&&only===0){
+    h=`Logically identical: all ${fmt(shared)} rules match`;
+    sub=c.equivalent?`${fmt(c.identical)} are word-for-word identical and ${fmt(c.equivalent)} are the same logic written differently.`:'Every rule is word-for-word identical.';
+  }else{
+    const parts=[];
+    if(c.different)parts.push(`${fmt(c.different)} with different logic`);
+    if(c.lost)parts.push(`${fmt(c.lost)} lost their rule`);
+    if(c.gained)parts.push(`${fmt(c.gained)} gained one`);
+    if(c.unverified)parts.push(`${fmt(c.unverified)} unverified`);
+    if(c.typechange)parts.push(`${fmt(c.typechange)} with a changed marker`);
+    h=bad?`${fmt(bad)} of ${fmt(shared)} shared rules differ`:'Shared rules all match, but the target sets differ';
+    sub=(parts.length?parts.join(', ')+'. ':'')+(only?`${fmt(only)} target${only>1?'s appear':' appears'} in only one file.`:'');
+  }
+  const stack=STATUS_ORDER.slice().reverse().filter(s=>c[s]).map(s=>`<span class="s-${s}" style="width:${100*c[s]/state.rows.length}%" title="${LABEL[s]}: ${c[s]}"></span>`).join('');
+  $('#verdict').className='verdict tone-'+tone;
+  $('#verdict').innerHTML=`
+    <div><div class="big">${pct(match,shared)}</div><div class="biglbl">of shared rules match</div></div>
+    <div><h2>${h}</h2><p class="sub">${esc(sub)}</p>
+      <div class="counts"><span>Original <b>${fmt(state.A.rules.size)}</b></span><span>Refactored <b>${fmt(state.B.rules.size)}</b></span><span>Shared <b>${fmt(shared)}</b></span><span>Only in original <b>${fmt(c.missing)}</b></span><span>Only in refactored <b>${fmt(c.added)}</b></span></div></div>
+    <div class="stack" aria-hidden="true">${stack}</div>`;
+}
+
+/* ---- filtering ---- */
+function setView(v,keepChips){
+  state.view=v;
+  if(!keepChips||v!=='custom'){
+    if(v==='diff')state.chips=new Set(DIFFS);
+    else if(v==='match')state.chips=new Set(MATCHES);
+    else if(v==='all')state.chips=new Set(STATUS_ORDER);
+  }
+  state.limit=100;
+  document.querySelectorAll('#seg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));
+  renderChips();renderList();
+}
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>setView(b.dataset.v));
+function renderChips(){
+  const c=counts();
+  $('#fchips').innerHTML=STATUS_ORDER.filter(s=>c[s]).map(s=>
+    `<button type="button" class="fchip s-${s}" data-s="${s}" aria-pressed="${state.chips.has(s)}" title="${TIP[s]}"><span class="d"></span>${LABEL[s]} <b>${fmt(c[s])}</b></button>`).join('');
+}
+$('#fchips').addEventListener('click',e=>{
+  const b=e.target.closest('.fchip');if(!b)return;
+  const s=b.dataset.s;
+  state.chips.has(s)?state.chips.delete(s):state.chips.add(s);
+  state.view='custom';state.limit=100;
+  document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  renderChips();renderList();
+});
+$('#search').addEventListener('input',e=>{state.q=e.target.value.trim().toLowerCase();state.limit=100;renderList();});
+function visible(){
+  const q=state.q;
+  return state.rows.filter(r=>state.chips.has(r.status)&&(!q||r.target.toLowerCase().includes(q)||(r.a&&r.a.rhs.toLowerCase().includes(q))||(r.b&&r.b.rhs.toLowerCase().includes(q))));
+}
+
+/* ---- rendering rows ---- */
+function ruleHTML(r,hl){
+  if(!r)return '<span class="marker">not present</span>';
+  if(r.type!=='expr')return `<span class="marker">${esc(r.rhs)}</span>`;
+  return r.rhs.split(/(\s+|&&|\|\||&|\||!|\(|\))/).map(p=>{
+    if(!p)return '';
+    if(p==='!')return '<span class="neg">!</span>';
+    if(/^(&&|\|\||&|\|)$/.test(p))return `<span class="op">${p}</span>`;
+    if(/^(\s+|\(|\))$/.test(p))return esc(p);
+    const c=hl&&hl.get(p);
+    return c?`<span class="g ${c}">${esc(p)}</span>`:esc(p);
+  }).join('');
+}
+function hlMaps(r){
+  const ha=new Map(),hb=new Map();
+  (r.removed||[]).forEach(g=>ha.set(g,'rm'));
+  (r.added||[]).forEach(g=>hb.set(g,'ad'));
+  (r.flipped||[]).forEach(g=>{ha.set(g,'fl');hb.set(g,'fl');});
+  return [ha,hb];
+}
+const list=(a,n=6)=>a.length>n?a.slice(0,n).join(', ')+` +${a.length-n} more`:a.join(', ');
+function deltaHTML(r){
+  const p=[];
+  if(r.status==='equivalent')p.push('<b>Same logic</b>, written differently');
+  if(r.status==='unverified')p.push('No difference found in sampled checks (not proven)');
+  if(r.status==='different'&&r.agree!==undefined)p.push(`<b>${Math.round(r.agree*100)}%</b> of inputs agree${r.exhaustive?'':' (sampled)'}`);
+  if(r.status!=='identical'&&r.status!=='equivalent'){
+    if(r.removed&&r.removed.length)p.push(`− ${esc(list(r.removed))}`);
+    if(r.added&&r.added.length)p.push(`+ ${esc(list(r.added))}`);
+    if(r.flipped&&r.flipped.length)p.push(`⇄ sign: ${esc(list(r.flipped))}`);
+  }
+  if(r.note)p.push(esc(r.note));
+  return p.length?`<div class="delta">${p.join(' · ')}</div>`:'';
+}
+function ladderHTML(rule,hl){
+  if(!rule)return '<p class="empty">Not present in this file.</p>';
+  if(rule.type!=='expr')return `<p class="empty">${esc(rule.rhs)}: no logic to compare.</p>`;
+  let terms;
+  try{terms=normalizeDNF(dnfOf(parseExpr(rule.rhs),false));}
+  catch(e){return '<p class="empty">Too large or not parseable to expand. See the raw rule.</p>';}
+  const c=canonStr(terms);
+  if(c==='0'||c==='1')return `<p class="empty">Constant ${c}.</p>`;
+  return '<div class="ladder">'+terms.map((t,ti)=>(ti?'<div class="orjoin">or</div>':'')+'<div class="term">'+
+    t.map(l=>{
+      const neg=l[0]==='!',g=neg?l.slice(1):l,h=hl.get(g);
+      const cls=(neg?'inh':'act')+(h==='fl'?' flip':h?' only':'');
+      return `<span class="lit ${cls}">${neg?'<span class="not">¬</span>':''}${esc(g)}</span>`;
+    }).join('<span class="andsym">∧</span>')+'</div>').join('')+'</div>';
+}
+function detailHTML(r){
+  const [ha,hb]=hlMaps(r);
+  const facts=[];
+  if(r.removed&&r.removed.length)facts.push(`Only in original: <b>${esc(list(r.removed,12))}</b>`);
+  if(r.added&&r.added.length)facts.push(`Only in refactored: <b>${esc(list(r.added,12))}</b>`);
+  if(r.flipped&&r.flipped.length)facts.push(`Sign flipped: <b>${esc(list(r.flipped,12))}</b>`);
+  if(r.how)facts.push(`Matched by <b>${r.how}</b>`);
+  if(r.names)facts.push(`Regulators across both: <b>${r.names.length}</b>`);
+  let ex='';
+  if(r.examples&&r.examples.length&&r.names&&r.names.length<=8){
+    ex='<div class="ex">Inputs where they disagree: '+r.examples.map(e=>
+      `<code>${esc(r.names.map((g,i)=>g+'='+e.a[i]).join(' '))}</code> original <b>${e.x}</b>, refactored <b>${e.y}</b>`).join('<br>')+'</div>';
+  }else if(r.diffs){
+    ex=`<div class="ex">${fmt(r.diffs)} of ${fmt(r.total)} ${r.exhaustive?'possible':'sampled'} input combinations give a different output.</div>`;
+  }
+  return `<div class="detail">
+    ${facts.length?`<div class="facts">${facts.map(f=>`<span>${f}</span>`).join('')}</div>`:''}
+    <div class="dcols"><div><h5>Original, normalised</h5>${ladderHTML(r.a,ha)}</div><div><h5>Refactored, normalised</h5>${ladderHTML(r.b,hb)}</div></div>
+    ${ex}
+    <p class="delta" style="margin:12px 0 0">Normalised = De Morgan applied, terms sorted, redundant terms removed. Dashed outline = regulator in only one version; solid purple = sign flipped.</p>
+  </div>`;
+}
+function renderList(){
+  const rows=visible();
+  const shown=rows.slice(0,state.limit);
+  const el=$('#list');
+  if(!rows.length){el.innerHTML='<div class="none">Nothing to show with these filters.</div>';return;}
+  el.innerHTML=shown.map(r=>{
+    const [ha,hb]=hlMaps(r),open=state.open.has(r.target);
+    return `<div class="grid row s-${r.status}${open?' open':''}" data-t="${esc(r.target)}" role="button" tabindex="0" aria-expanded="${open}">
+      <div class="c-t">${esc(r.target)}</div>
+      <div><span class="pill s-${r.status}" title="${TIP[r.status]}">${LABEL[r.status]}</span></div>
+      <div class="rule">${ruleHTML(r.a,ha)}</div>
+      <div class="rule">${ruleHTML(r.b,hb)}${deltaHTML(r)}</div>
+      ${open?detailHTML(r):''}
+    </div>`;
+  }).join('')+(rows.length>shown.length?`<div class="more"><button class="btn" type="button" id="moreBtn">Show ${fmt(Math.min(100,rows.length-shown.length))} more (${fmt(rows.length-shown.length)} remaining)</button></div>`:'');
+}
+$('#list').addEventListener('click',e=>{
+  if(e.target.closest('.detail'))return;
+  if(e.target.id==='moreBtn'){state.limit+=100;renderList();return;}
+  const row=e.target.closest('.row');if(!row)return;
+  const t=row.dataset.t;
+  state.open.has(t)?state.open.delete(t):state.open.add(t);
+  renderList();
+});
+$('#list').addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('row')){e.preventDefault();e.target.click();}
+});
+
+/* ---- export & theme ---- */
+$('#csvBtn').onclick=()=>{
+  try{
+    const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+    const lines=[['Target','Status','Original','Refactored','Only in original','Only in refactored','Sign flipped','Agreement']];
+    state.rows.forEach(r=>lines.push([r.target,LABEL[r.status],r.a?r.a.rhs:'',r.b?r.b.rhs:'',(r.removed||[]).join(' '),(r.added||[]).join(' '),(r.flipped||[]).join(' '),r.agree!==undefined?Math.round(r.agree*1000)/10+'%':'']));
+    const blob=new Blob([lines.map(l=>l.map(q).join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rules_comparison.csv';document.body.appendChild(a);a.click();a.remove();
+  }catch(e){alert('Could not export the CSV from this page.');}
+};
+$('#themeBtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const dark=matchMedia('(prefers-color-scheme:dark)').matches;
+  document.documentElement.setAttribute('data-theme',cur?(cur==='dark'?'light':'dark'):(dark?'light':'dark'));
+};
+
+loadExample();
+</script>
+</body>
+</html>
